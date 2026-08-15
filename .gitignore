@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+.env
+
+# build artifacts (rebuild from data/schemes via scripts/build_index.py)
+index/
+*.faiss
+*.pkl
+
+# eval run outputs
+outputs/
+*.log
+
+.ipynb_checkpoints/
+.DS_Store

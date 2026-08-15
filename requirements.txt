@@ -1,0 +1,7 @@
+groq
+sentence-transformers
+faiss-cpu
+pandas
+numpy
+python-dotenv
+tqdm
