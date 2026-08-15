@@ -81,8 +81,8 @@ docs/           planning docs, decision log, contracts, per-phase notes, figures
 
 ## Results
 
-Not yet available — pipeline is in Week 1 of a 4-week build. Results will be filled in as each
-objective closes out; see `docs/objective1_result.md` through `docs/objective6_result.md`.
+Not yet available — pipeline is in Week 1 of a 4-week build. Results will be filled in as
+objectives close out.
 
 | Metric | Plain RAG | Verified RAG |
 |---|---|---|
