@@ -103,8 +103,9 @@ Week 1: project scaffold in place. Track B done: 60-question Hinglish evaluation
 (`eval/questions.csv`) across 4 fixed schemes, claim decomposition tested against hand-written
 Hinglish samples, verifier prompt drafted and ready to test on 5 sample claim/evidence pairs
 (`scripts/test_verifier_samples.py`, needs a Groq key to run). Track A done: structured scheme
-facts dataset — one CSV per scheme in `data/schemes/`, fetched live from official sources by
-`scripts/fetch_scheme_data.py` — across all 4 schemes (PM-KISAN, Ayushman Bharat, PM Awas Yojana,
-Post-Matric Scholarship), bge-m3 + FAISS index builds and returns sensible passages for Hinglish
-queries, Groq API key confirmed working with a live chat completion call. See
+facts dataset — one CSV per scheme in `data/schemes/`, 172 facts total across multiple official
+sources per scheme, fetched live by `scripts/fetch_scheme_data.py` (PM-KISAN 43, Ayushman Bharat
+37, PM Awas Yojana 58, Post-Matric Scholarship 34), bge-m3 + FAISS index builds and returns
+sensible passages for Hinglish queries, Groq API key confirmed working with a live chat
+completion call. See
 [`docs/problems_and_decisions.md`](docs/problems_and_decisions.md) for the running decision log.
