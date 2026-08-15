@@ -17,3 +17,6 @@ outputs/
 
 .ipynb_checkpoints/
 .DS_Store
+
+# project docs (kept local, not pushed)
+*.docx
