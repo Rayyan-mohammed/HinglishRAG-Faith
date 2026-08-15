@@ -1,54 +1,90 @@
-Ayushman Bharat - Pradhan Mantri Jan Arogya Yojana (AB PM-JAY)
+Source: Frequently Asked Questions, Ayushman Bharat Pradhan Mantri Jan Arogya Yojana (AB PM-JAY),
+official portal of Ayushman Bharat Haryana, Government of Haryana (content sourced from National
+Health Authority guidelines). Downloaded from ayushmanbharat.haryana.gov.in.
 
-What it is
-Ayushman Bharat is a flagship scheme of the Government of India, launched following the
-recommendations of the National Health Policy 2017, with the goal of achieving Universal Health
-Coverage. It has two components: Health and Wellness Centres for primary care, and Pradhan
-Mantri Jan Arogya Yojana (PM-JAY), which provides hospitalization insurance cover for secondary
-and tertiary care.
+Frequently Asked Questions under Ayushman Bharat Pradhan Mantri Jan Arogya Yojana
 
-Coverage amount
-PM-JAY provides a cashless health cover of up to Rs. 5,00,000 (5 lakh) per eligible family, per
-year, for listed secondary and tertiary care hospitalizations. Any treatment cost above this
-amount must be paid by the beneficiary. Coverage is on a family floater basis, meaning there is
-no cap on family size or the age of family members covered.
+1. What is Ayushman Bharat Pradhan Mantri Jan Arogya Yojana?
+Ayushman Bharat, a flagship scheme of Government of India, was launched as recommended by the
+National Health Policy 2017, to achieve the vision of Universal Health Coverage (UHC). This
+initiative has been designed to meet Sustainable Development Goals (SDGs) and its underlining
+commitment, which is to "leave no one behind." Ayushman Bharat is an attempt to move from
+sectoral and segmented approach of health service delivery to a comprehensive need-based health
+care service. This scheme aims to undertake path breaking interventions to holistically address
+the healthcare system (covering prevention, promotion and ambulatory care) at the primary,
+secondary and tertiary level. Ayushman Bharat adopts a continuum of care approach, comprising of
+two inter-related components, which are: Health and Wellness Centres (HWCs), and Pradhan Mantri
+Jan Arogya Yojana (PM-JAY).
 
-What is covered
-Benefits include medical consultation, pre-hospitalization expenses, medicines, diagnostic
-tests, medical implants where required, accommodation, food during the hospital stay, intensive
-care, treatment of complications arising during care, and post-hospitalization follow-up care
-for up to 15 days after discharge. The scheme covers 874 treatment packages and 1,592
-procedures across secondary and tertiary care. Pre-existing diseases are covered from day one,
-with no waiting period. Outpatient department (OPD) consultations are not covered.
+2. What are the benefits of Ayushman Bharat Pradhan Mantri Jan Arogya Yojana?
+PM-JAY provides cashless cover of up to INR 5,00,000 to each eligible family per annum for listed
+secondary and tertiary care conditions. The cover under the scheme includes all expenses incurred
+on the following components of the treatment: medical examination, treatment and consultation;
+pre-hospitalization; medicine and medical consumables; non-intensive and intensive care services;
+diagnostic and laboratory investigations; medical implantation services (where necessary);
+accommodation benefits; food services; complications arising during treatment; post-
+hospitalization follow-up care up to 15 days. The benefits of INR 5,00,000 are on a family
+floater basis, which means that it can be used by one or all members of the family, with no cap
+on family size or age of members. Pre-existing diseases are covered from the very first day.
 
-Eligibility
-Beneficiary families are identified from the Socio-Economic Caste Census (SECC) 2011 database,
-based on defined deprivation and occupational categories (for example, in rural areas, families
-in specified deprivation categories; in urban areas, occupational categories such as domestic
-workers, street vendors, and construction workers). There is no income criterion for families
-already identified under SECC-2011. Separately, from 29 October 2024, the scheme was extended to
-cover all citizens aged 70 years and above, regardless of their income or socio-economic status.
-Some states also extend eligibility to additional categories under state-specific schemes with
-their own income limits.
+3. What is the maximum benefit size in Rupees under Ayushman Bharat Pradhan Mantri Jan Arogya
+Yojana?
+PM-JAY provides cashless cover of up to INR 5,00,000 to each eligible family per annum for listed
+secondary and tertiary care conditions.
 
-How to get an Ayushman card
-Eligible individuals can get their Ayushman card made at Ayushman Kiosks located in empanelled
-hospitals or at Common Service Centres (CSCs). Eligibility can be checked online at
-mera.pmjay.gov.in.
+4. Can I have to pay any amount beyond the wallet size under Ayushman Bharat Pradhan Mantri Jan
+Arogya Yojana?
+PM-JAY provides cashless cover of up to INR 5,00,000 only to each eligible family per annum for
+listed secondary and tertiary care conditions. Any amount incurred in respect to medical expenses
+beyond Rs. 5,00,000 per year per family has to be borne by the beneficiary.
 
-Documents required
-A PM/CM entitlement letter (where applicable), ration card, or Aadhaar card is used for
-identification when applying for or availing benefits under the scheme.
+5. How many packages are covered under Ayushman Bharat Pradhan Mantri Jan Arogya Yojana?
+There are 874 packages and 1592 procedures under PM-JAY.
 
-Where treatment is available
-Treatment is cashless at empanelled government hospitals, Community Health Centres (CHCs),
-Primary Health Centres (PHCs), and empanelled private hospitals. The scheme has national
-portability, meaning an eligible beneficiary can avail treatment at any empanelled hospital
-anywhere in India, not only in their home state.
+6. Who were the beneficiaries of Ayushman Bharat Pradhan Mantri Jan Arogya Yojana?
+At present those persons will be considered as beneficiary of the Ayushman Bharat Pradhan Mantri
+Jan Arogya Yojana who were covered under specific categories of SECC-2011 database of Govt. of
+India.
 
-Support and grievances
-Beneficiaries can call the toll-free helpline numbers 14555 or 1800-111-565 for assistance.
-Grievances can be filed at cgrms.pmjay.gov.in.
+7. What are the most common documents for checking the eligibility for Ayushman Bharat Pradhan
+Mantri Jan Arogya Yojana?
+PM/CM entitlement letter; Ration Card; Aadhaar Card for identification only.
 
-Source: nha.gov.in (National Health Authority) and ayushmanbharat.haryana.gov.in
-(Government of Haryana), official government portals for the AB PM-JAY scheme.
+8. Is there any Income criteria for eligibility under Ayushman Bharat Pradhan Mantri Jan Arogya
+Yojana? Can I take any benefits if I am not covered in SECC-2011 database?
+No.
+
+9. Can I check on-line for my eligibility under Ayushman Bharat Pradhan Mantri Jan Arogya Yojana?
+https://mera.pmjay.gov.in/search/login
+
+10. What is the process for inclusion of beneficiaries of Haryana Mukhyamantri Antyodaya Parivar
+Utthan Yojana?
+The beneficiaries under Mukhyamantri Antyodaya Parivar Utthan Yojana whose annual family income
+is less than 1.80 Lakh are eligible for availing benefits under AB-PMJAY. The eligible
+beneficiaries do not require to submit any request letter / entitlement letter. They can get
+their Ayushman Bharat card at Ayushman Kiosk in all PMJAY empanelled hospitals and from the
+Common Services Centers (CSC).
+
+11. From where a beneficiary can get Ayushman card?
+Beneficiary can get their Ayushman Bharat card at Ayushman Kiosk in all PMJAY empanelled
+hospitals and from the Common Services Centers (CSC).
+
+12. From where a beneficiary can get benefits of Ayushman Bharat Pradhan Mantri Jan Arogya
+Yojana?
+Beneficiaries can avail the benefits of Ayushman Bharat Pradhan Mantri Jan Arogya Yojana in all
+Government Hospitals, CHC, PHC and any other empanelled private hospitals.
+
+13. Does the scheme cover OPD services?
+No.
+
+14. Can I check the list of hospitals in and around my district online?
+Yes, here is the website link: https://hospitals.pmjay.gov.in/Search/
+
+15. Can I take benefits on national portability basis?
+Yes.
+
+16. Can I raise any grievance against any hospitals/person?
+Yes, here is the website link: https://cgrms.pmjay.gov.in/GRMS/loginnew.htm
+
+17. Is there any State/National toll free number?
+Toll-Free Call Center Number: 14555 / 1800111565 / 18001802415.

@@ -1,45 +1,151 @@
-Post-Matric Scholarship for Scheduled Caste (SC) Students
+Source: Scheme of Post Matric Scholarships to the Students Belonging to Scheduled Castes for
+Studies in India (effective from 01-07-2010), Ministry of Social Justice & Empowerment,
+Government of India. Downloaded via sewa.haryana.gov.in (Department of Social Justice,
+Empowerment, Welfare of SCs/BCs and Antyodaya, Government of Haryana).
 
-What it is
-The Post-Matric Scholarship (PMS) scheme for SC students is a centrally sponsored scheme run by
-the Department of Social Justice and Empowerment, Government of India, implemented through state
-governments and union territory administrations. Its objective is to provide financial
-assistance to Scheduled Caste students studying at the post-matriculation level, to support
-their enrolment and continuation in higher education.
+Scheme of Post Matric Scholarship
+(Effective from 01-07-2010)
 
-Eligibility
-- The applicant must belong to a Scheduled Caste (SC).
-- The applicant must be enrolled in a post-matriculation or post-secondary course, which
-  includes general, technical, and professional courses (from Class 11 up to postgraduate and
-  research-level studies).
-- The annual income of the student's parents or guardian must not exceed the prescribed income
-  ceiling. Under the scheme as it has stood in recent years, this ceiling is Rs. 2.5 lakh per
-  year; the government has proposed raising this ceiling to Rs. 4.5 lakh in upcoming scheme
-  revisions, so applicants should check the current year's official notification.
-- An income certificate from a competent authority is required to prove eligibility under the
-  income ceiling.
+I. Object
+The objective of the scheme is to provide financial assistance to the Scheduled Caste students
+studying at post matriculation or post-secondary stage to enable them to complete their
+education.
 
-Benefit amount
-The scholarship covers:
-- Compulsory non-refundable fees charged by the institution (tuition and other admissible fees),
-  reimbursed to the student.
-- A monthly maintenance allowance, which varies by course level and hosteller/day-scholar
-  status. For hostellers, the maintenance allowance has ranged from about Rs. 380 to Rs. 1,200
-  per month; for day scholars, it has ranged from about Rs. 230 to Rs. 550 per month, depending
-  on the course level (post-matric up to postgraduate).
+II. Scope
+These scholarships are available for studies in India only and are awarded by the government of
+the State/Union Territory to which the applicant actually belongs, i.e. permanently settled.
 
-How to apply
-Applications are submitted through the National Scholarship Portal (NSP) at scholarships.gov.in.
-Some states also run their own state-specific SC welfare portals in addition to, or instead of,
-the NSP; students should check which portal applies to their state. Scholarship amounts, once
-approved, are paid directly to the student's bank account through Direct Benefit Transfer (DBT).
+III. Conditions of Eligibility
+- The scholarships are open to nationals of India.
+- These scholarships will be given for the study of all recognized post-matriculation or
+  post-secondary courses pursued in recognized institutions, with certain exceptions (e.g.
+  Aircraft Maintenance Engineer's Courses, Private Pilot license Courses).
+- Only those candidates who belong to Scheduled Castes so specified in relation to the
+  State/Union Territory to which the applicant actually belongs, and who have passed the
+  Matriculation or Higher Secondary or any higher examination of a recognised University or
+  Board of Secondary Education, will be eligible.
+- Candidates who after passing one stage of education are studying in the same stage of
+  education in a different subject (e.g. I.Sc. after I.A.) will not be eligible.
+- Employed students whose income combined with the income of their parents/guardians does not
+  exceed the maximum prescribed income ceiling are made eligible to post-matric scholarships to
+  the extent of reimbursement of all compulsorily payable non-refundable fees.
+- All children of the same parents/guardians will be entitled to receive benefits of the scheme.
+- A scholarship holder under this scheme will not hold any other scholarship/stipend at the same
+  time.
 
-Note on state variation
-While the core scheme is defined at the national level by the Department of Social Justice and
-Empowerment, individual states may set their own application windows, additional document
-requirements, and in some cases their own income ceilings under state-run SC welfare
-scholarships. Students should confirm the exact rules for their state before applying.
+IV. Means Test
+Scholarships will be paid to the students whose parents'/guardians' income from all sources does
+not exceed Rs. 2,50,000/- (Rupees Two lakh Fifty thousand only). So long as either of the parents
+(or husband, in the case of a married unemployed girl student) is alive, only the income of the
+parents/husband from all sources is taken into account. Only where both parents (or husband) have
+died is the income of the guardian supporting the student considered. Income certificate is
+required to be taken once only, i.e. at the time of admission, for courses continuing for more
+than one year.
 
-Source: scholarships.gov.in (National Scholarship Portal, Department of Social Justice and
-Empowerment, Government of India) and haryanascbc.gov.in / sewa.haryana.gov.in (Government of
-Haryana), for state-level implementation details.
+V. Value of Scholarship
+The value of scholarship includes, for the complete duration of the course:
+(i) maintenance allowance,
+(ii) reimbursement of compulsory non-refundable fees,
+(iii) study tour charges,
+(iv) thesis typing/printing charges for Research Scholars,
+(v) book allowance for students pursuing correspondence courses,
+(vi) book bank facility for specified courses, and
+(vii) additional allowance for students with disabilities.
+
+(i) Maintenance allowance — rate of maintenance allowance (in Rupees per month), Hostellers /
+Day Scholars, by course group:
+- Group I (Degree/PG courses in Medicine, Engineering, Technology, Architecture, Management,
+  Computer Science, M.Phil/Ph.D, CA/CS/ICWA, LLM, etc.): Rs. 1200 (Hostellers) / Rs. 550 (Day
+  Scholars) per month.
+- Group II (Professional courses like Pharmacy, Nursing, LLB, Mass Communication, Hotel
+  Management; PG courses not covered under Group I): Rs. 820 (Hostellers) / Rs. 530 (Day
+  Scholars) per month.
+- Group III (Graduate degree courses not covered under Group I & II, e.g. BA/B.Sc/B.Com): Rs.
+  570 (Hostellers) / Rs. 300 (Day Scholars) per month.
+- Group IV (post-matriculation non-degree courses, e.g. senior secondary Class XI/XII, ITI
+  courses, diploma courses in Polytechnics): Rs. 380 (Hostellers) / Rs. 230 (Day Scholars) per
+  month.
+
+Commercial Pilot License (CPL) course candidates are provided maintenance allowance at Group I
+rates (Rs. 1200/month for hostellers, Rs. 550/month for day scholars), with up to 50 awards per
+annum nationally.
+
+(ii) Additional allowances for SC students with disabilities: Reader Allowance for blind scholars
+(Rs. 240/month for Group I & II, Rs. 200/month for Group III, Rs. 160/month for Group IV);
+transport allowance up to Rs. 160/month for disabled day scholars; escort allowance of Rs.
+160/month for severely handicapped day scholars; extra coaching allowance of Rs. 240/month for
+mentally retarded and mentally ill students.
+
+(iii) Fees: Scholars will be paid enrolment/registration, tuition, games, Union, Library,
+Magazine, Medical Examination and other fees compulsorily payable by the scholar to the
+institution or University/Board. Refundable deposits such as caution money and security deposit
+are excluded.
+
+(iv) Study Tours: up to a maximum of Rs. 1600 per annum, limited to actual expenditure.
+
+(v) Thesis Typing/Printing Charges: up to a maximum of Rs. 1600 for research scholars.
+
+(vi) Book Allowance for correspondence/distance education courses: annual allowance of Rs.
+1200/- for essential/prescribed books.
+
+VI. Selection of Candidates
+All eligible Scheduled Caste candidates will be given scholarships subject to the Means Test.
+Candidates belonging to one State but studying in another State will be awarded scholarships by
+the State to which they belong.
+
+VII. Duration and Renewal of Awards
+The award, once made, is tenable from the stage at which it is given to the completion of the
+course, subject to good conduct and regularity in attendance, and is renewed year to year
+provided the scholar secures promotion to the next higher class. If a Group I scholar fails an
+examination for the first time, the award may be renewed; for a second or subsequent failure, the
+student bears their own expenses until they secure promotion.
+
+VIII. Payment
+Maintenance allowance is payable from 1st April or from the month of admission, whichever is
+later, to the month in which examinations are completed. The Government of the State/Union
+Territory Administration to which the student belongs pays the scholarship money to selected
+students.
+
+IX. Mode of Disbursal of Scholarship
+State Government/UT administrations are required to avoid cash payment of scholarship amounts;
+payment of scholarship should be made to beneficiaries through their accounts in post
+offices/banks.
+
+X. Other Conditions for the Award
+The scholarship depends on the satisfactory progress and conduct of the scholar. If a student is
+found to have obtained a scholarship by false statements, the scholarship will be cancelled and
+the amount recovered, and the student will be blacklisted and debarred from any scholarship
+scheme.
+
+XI. Announcement of the Scheme
+All the State Governments/UT Administrations will announce, in May-June, the details of the
+scheme and invite applications by issuing an advertisement in leading newspapers of the State and
+through their respective websites. The applicant should submit the completed application to the
+prescribed authority before the last date prescribed for receipt of applications.
+
+XII. Procedure for Applying
+An application for scholarship should comprise:
+a. One copy of the application for scholarship in the prescribed form.
+b. One copy of the passport size photograph with signatures of the student (for fresh
+   scholarship).
+c. One attested copy of certificates, diploma, degree etc. in respect of all examinations
+   passed.
+d. A certificate (in original) of Caste duly signed by an authorised Revenue Officer not below
+   the rank of Tehsildar.
+e. An income declaration by the self-employed parents/guardians, stating definite income from
+   all sources by way of an affidavit on non-judicial stamp paper. Employed parents/guardians
+   are required to obtain an income certificate from their employer.
+f. A receipt in acknowledgement of the scholarship in the previous year, counter-signed by the
+   Head of the Institution, if the applicant received a scholarship under this scheme in the
+   preceding year.
+The complete application shall be submitted to the Head of the Institution, addressed to an
+officer specified by the Government of the State/Union Territory to which the student belongs.
+
+XIII. Funding Pattern of the Scheme
+The Scheme is implemented by the State Governments and Union Territory Administrations, which
+receive 100% central assistance from Government of India for the total expenditure under the
+scheme, over and above their respective Committed Liability. All State Governments and Union
+Territory Administrations implementing the scheme must furnish data of beneficiaries and
+expenditure to Government of India regularly in Quarterly Reports, and designate Grievance
+Redressal Officers (GROs) at the State and District levels to redress students' scholarship-
+related grievances.
