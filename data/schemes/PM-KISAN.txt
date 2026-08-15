@@ -1,0 +1,43 @@
+PM-KISAN (Pradhan Mantri Kisan Samman Nidhi)
+
+What it is
+PM-KISAN is a Central Sector scheme, fully funded by the Government of India, that became
+operational on 1 December 2018. It provides direct income support to eligible land-holding
+farmer families across the country.
+
+Benefit amount
+Eligible families receive Rs. 6,000 per year, paid in three equal installments of Rs. 2,000
+each, credited directly into the beneficiary's bank account.
+
+Eligibility
+The scheme covers land-holding farmer families. For this scheme, "family" is defined as
+husband, wife, and their minor children. State governments and union territory administrations
+are responsible for identifying eligible families based on the scheme guidelines and land
+records.
+
+Who is excluded
+The following categories are not eligible for PM-KISAN benefits, even if they hold agricultural
+land:
+- Institutional land holders.
+- Former or current holders of constitutional posts, ministers, or members of Parliament,
+  state legislatures, municipal corporations, or district panchayats.
+- Serving or retired officers and employees of the central or state government and its
+  departments, public sector undertakings, and autonomous institutions (Group D / Class IV and
+  Multi-Tasking Staff employees are exempt from this exclusion, i.e. they remain eligible).
+- Retired pensioners whose monthly pension is Rs. 10,000 or more (excluding Group D / Class IV
+  pensioners).
+- Any person who paid income tax in the last assessment year.
+- Professionals such as doctors, engineers, lawyers, chartered accountants, and architects who
+  are registered with their professional bodies and practising.
+
+eKYC requirement
+Biometric-based eKYC is mandatory for every registered farmer to continue receiving
+installments. It can be completed through Common Service Centres (CSCs), the PM-KISAN mobile
+app, or the official portal's eKYC option.
+
+How to apply
+Farmers can register as new beneficiaries through the official PM-KISAN portal, at Common
+Service Centres (CSCs), through eMitra kiosks (in some states), or via state government-
+authorised local revenue officials.
+
+Source: pmkisan.gov.in (official PM-KISAN portal, Government of India)
