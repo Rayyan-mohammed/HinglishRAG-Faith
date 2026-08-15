@@ -44,6 +44,16 @@ Running log. Append new entries at the bottom of each section, don't rewrite his
 **Why:** Keeps model/version choices and paths in one place instead of scattered across pipeline modules.
 **Impact:** One extra import line per module; negligible cost for the clarity.
 
+### ADR-009: Fixed scheme list — PM-KISAN, Ayushman Bharat, Post-Matric Scholarship, PM Awas Yojana
+**Decision:** These 4 schemes, chosen upfront so Track B could start writing evaluation questions in Week 1 without waiting on Track A's document collection.
+**Why:** All well-known, high-traffic .gov.in schemes with clear eligibility/deadline/amount/document facts to ask about; matches the blueprint's example set in Section 12. 4 schemes keeps the 60-question set balanced at 15 questions each.
+**Impact:** Track A's Week 1 document collection (A1) should target exactly these 4, using these names, so `eval/questions.csv`'s `scheme` column joins cleanly to `data/schemes/` once built.
+
+### ADR-010: `judge()` split out from `verify_claim()` in `src/verification.py`
+**Decision:** The LLM-as-judge prompt call now takes `(claim, evidence_text)` directly, with `verify_claim()` doing retrieval and then calling `judge()`.
+**Why:** B1 needs to test the verifier prompt on 5 hand-written claim/evidence pairs before any retrieval index exists. Splitting the functions means that test doesn't need a fake index or fake passages.
+**Impact:** None to existing behavior — `verify_claim()`'s output is unchanged, just calls through `judge()` now.
+
 ## Problems Encountered
 
 No problems logged yet. Add entries as they come up, in this format:

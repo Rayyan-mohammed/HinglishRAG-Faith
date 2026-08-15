@@ -1,0 +1,61 @@
+id,scheme,category,question
+1,PM-KISAN,eligibility,Main ek chhote kisan hoon mere paas 1 acre zameen hai kya main PM-KISAN ke liye eligible hoon?
+2,PM-KISAN,eligibility,Kya PM-KISAN scheme sirf un kisano ke liye hai jinke paas apni zameen hai ya kiraye ki zameen wale bhi apply kar sakte hain?
+3,PM-KISAN,eligibility,Agar meri family mein koi government employee hai to kya hum PM-KISAN ka fayda le sakte hain?
+4,PM-KISAN,eligibility,PM-KISAN ke liye minimum landholding requirement kya hai?
+5,PM-KISAN,deadline,PM-KISAN ki agli installment kab tak aayegi?
+6,PM-KISAN,deadline,Naye kisan registration ke liye last date kya hai?
+7,PM-KISAN,deadline,eKYC complete karne ki deadline kya hai PM-KISAN ke liye?
+8,PM-KISAN,amount,PM-KISAN scheme mein total kitna paisa milta hai ek saal mein?
+9,PM-KISAN,amount,Har installment mein kitne rupees transfer hote hain?
+10,PM-KISAN,amount,Kya amount sabhi states ke kisano ke liye same hai?
+11,PM-KISAN,amount,Agar mera application late approve hua to kya pichle installments bhi milenge?
+12,PM-KISAN,documents,PM-KISAN ke liye kaunse documents chahiye application ke time?
+13,PM-KISAN,documents,Kya Aadhaar card mandatory hai PM-KISAN ke liye?
+14,PM-KISAN,documents,Land ownership proof ke liye kaunsa document dena hota hai?
+15,PM-KISAN,documents,Bank account details verify karne ke liye kya submit karna padta hai?
+16,Ayushman Bharat,eligibility,Ayushman Bharat card banwane ke liye kaun eligible hai?
+17,Ayushman Bharat,eligibility,Kya private sector employees Ayushman Bharat ka labh le sakte hain?
+18,Ayushman Bharat,eligibility,Meri family SECC list mein nahi hai kya phir bhi hum apply kar sakte hain?
+19,Ayushman Bharat,eligibility,Kya Ayushman Bharat scheme sirf BPL families ke liye hai?
+20,Ayushman Bharat,deadline,Ayushman card banwane ki koi last date hai kya?
+21,Ayushman Bharat,deadline,Hospital mein treatment claim submit karne ki time limit kya hai?
+22,Ayushman Bharat,deadline,Card renewal kab karna padta hai?
+23,Ayushman Bharat,amount,Ayushman Bharat mein kitna health cover milta hai per family?
+24,Ayushman Bharat,amount,Kya yeh cover ek baar ke liye hai ya har saal renew hota hai?
+25,Ayushman Bharat,amount,Treatment ka poora kharcha cover hota hai ya kuch amount khud dena padta hai?
+26,Ayushman Bharat,amount,Kya cover amount har state mein alag hota hai?
+27,Ayushman Bharat,documents,Ayushman Bharat card banwane ke liye kaunse documents chahiye?
+28,Ayushman Bharat,documents,Kya ration card zaroori hai is scheme ke liye?
+29,Ayushman Bharat,documents,Hospital mein treatment ke time kaunsa ID dikhana padta hai?
+30,Ayushman Bharat,documents,Family details verify karne ke liye kya document submit karna hota hai?
+31,Post-Matric Scholarship,eligibility,Post-Matric scholarship ke liye kaunse students eligible hain?
+32,Post-Matric Scholarship,eligibility,Kya yeh scholarship sirf SC ST students ke liye hai ya general category bhi apply kar sakti hai?
+33,Post-Matric Scholarship,eligibility,Family income limit kya hai is scholarship ke liye?
+34,Post-Matric Scholarship,eligibility,Kya diploma students bhi is scholarship ke liye apply kar sakte hain?
+35,Post-Matric Scholarship,deadline,Scholarship application ki last date kya hai is saal?
+36,Post-Matric Scholarship,deadline,Renewal application kab tak submit karni hoti hai?
+37,Post-Matric Scholarship,deadline,Documents verification ke baad kitne din mein result aata hai?
+38,Post-Matric Scholarship,amount,Post-Matric scholarship mein kitni amount milti hai?
+39,Post-Matric Scholarship,amount,Kya amount course ke hisaab se alag hoti hai?
+40,Post-Matric Scholarship,amount,Hostel mein rehne wale students ko extra amount milta hai kya?
+41,Post-Matric Scholarship,amount,Scholarship amount direct bank account mein aata hai ya college ko jata hai?
+42,Post-Matric Scholarship,documents,Scholarship apply karne ke liye kaunse documents chahiye?
+43,Post-Matric Scholarship,documents,Income certificate kis authority se banwana padta hai?
+44,Post-Matric Scholarship,documents,Kya caste certificate submit karna mandatory hai?
+45,Post-Matric Scholarship,documents,Bank passbook ki copy ke alawa aur kya documents chahiye?
+46,PM Awas Yojana,eligibility,PM Awas Yojana ke liye kaun apply kar sakta hai?
+47,PM Awas Yojana,eligibility,Kya jinke paas already pucca ghar hai wo bhi eligible hain?
+48,PM Awas Yojana,eligibility,EWS aur LIG category ka matlab kya hai is scheme mein?
+49,PM Awas Yojana,eligibility,Kya yeh scheme sirf shehri areas ke logo ke liye hai?
+50,PM Awas Yojana,deadline,PM Awas Yojana application ki last date kya hai?
+51,PM Awas Yojana,deadline,Subsidy claim karne ke liye construction start hone ke baad kitne time tak apply karna hota hai?
+52,PM Awas Yojana,deadline,Application status check karne ke liye kitna wait karna padta hai?
+53,PM Awas Yojana,amount,PM Awas Yojana mein interest subsidy kitni milti hai?
+54,PM Awas Yojana,amount,Kya subsidy amount income category ke hisaab se alag hoti hai?
+55,PM Awas Yojana,amount,Maximum loan amount kitna cover hota hai is scheme mein?
+56,PM Awas Yojana,amount,Subsidy ek baar milti hai ya installments mein?
+57,PM Awas Yojana,documents,PM Awas Yojana ke liye kaunse documents chahiye application ke time?
+58,PM Awas Yojana,documents,Income proof ke liye kya submit karna padta hai?
+59,PM Awas Yojana,documents,Property documents mein kya kya dena hota hai?
+60,PM Awas Yojana,documents,Kya Aadhaar aur PAN card dono zaroori hain is scheme ke liye?
