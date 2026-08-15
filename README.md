@@ -92,6 +92,9 @@ objectives close out.
 
 ## Status
 
-Week 1: project scaffold + retrieval/generation/verification skeleton in place. Scheme documents
-and the evaluation question set are next. See [`docs/problems_and_decisions.md`](docs/problems_and_decisions.md)
-for the running decision log.
+Week 1: project scaffold in place. Track B done: 60-question Hinglish evaluation set
+(`eval/questions.csv`) across 4 fixed schemes, claim decomposition tested against hand-written
+Hinglish samples, verifier prompt drafted and ready to test on 5 sample claim/evidence pairs
+(`scripts/test_verifier_samples.py`, needs a Groq key to run). Track A's retrieval pipeline and
+scheme document collection still outstanding. See
+[`docs/problems_and_decisions.md`](docs/problems_and_decisions.md) for the running decision log.

@@ -22,10 +22,9 @@ EVIDENCE: {evidence}
 """
 
 
-def verify_claim(claim, index, passages, top_k=2):
-    evidence_passages = retrieve(claim, index, passages, top_k=top_k)
-    evidence_text = "\n\n".join(p["text"] for p in evidence_passages)
-
+def judge(claim, evidence_text):
+    """Core LLM-as-judge call: a claim against a block of evidence text.
+    No retrieval involved — usable directly on hand-written claim/evidence pairs."""
     client = get_client()
     response = client.chat.completions.create(
         model=VERIFIER_MODEL,
@@ -42,5 +41,13 @@ def verify_claim(claim, index, passages, top_k=2):
         result = {"verdict": "UNVERIFIABLE", "confidence": 0.0}
 
     result["claim"] = claim
+    return result
+
+
+def verify_claim(claim, index, passages, top_k=2):
+    evidence_passages = retrieve(claim, index, passages, top_k=top_k)
+    evidence_text = "\n\n".join(p["text"] for p in evidence_passages)
+
+    result = judge(claim, evidence_text)
     result["evidence"] = evidence_passages
     return result
