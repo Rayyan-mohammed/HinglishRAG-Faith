@@ -73,7 +73,10 @@ src/            pipeline code (retrieval, generation, decomposition, verificatio
 scripts/        CLI entry points
 tests/          unit tests
 data/schemes/   source government scheme documents
-eval/           hand-labelled evaluation set
+eval/           hand-labelled evaluation set (input questions + ground-truth labels)
+results/        pipeline outputs (generated answers, verifier results, computed metrics)
+demo/           working demo (Objective O6)
+notebooks/      exploratory/prototyping work
 docs/           planning docs, decision log, contracts, per-phase notes, figures
 ```
 

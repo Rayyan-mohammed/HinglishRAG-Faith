@@ -55,6 +55,9 @@ Returned by retrieval, consumed by generation and verification.
 
 ## Data formats (proposed, not yet built — confirm before B1/B2 lock these in)
 
+Input test set lives in `eval/`. Pipeline outputs (generated answers, verifier results,
+computed metrics) live in `results/` — see `results/README.md`.
+
 ### `eval/questions.csv`
 | column | type | notes |
 |---|---|---|
@@ -70,14 +73,14 @@ Returned by retrieval, consumed by generation and verification.
 | `label` | str | `fully_correct` / `partially_hallucinated` / `fully_hallucinated` |
 | `notes` | str | optional, why this label |
 
-### Generated answers CSV (built in A2, one row per question, per pipeline variant)
+### `results/generated_answers.csv` (built in A2, one row per question, per pipeline variant)
 | column | type | notes |
 |---|---|---|
 | `question_id` | int | |
 | `pipeline` | str | `plain` or `verified` |
 | `answer` | str | raw generated text |
 
-### Verifier results CSV (built in B3)
+### `results/verifier_results.csv` (built in B3)
 | column | type | notes |
 |---|---|---|
 | `question_id` | int | |
