@@ -2,7 +2,7 @@
 
 import json
 
-from src.config import VERIFIER_MODEL
+from config.settings import VERIFIER_MODEL
 from src.generation import get_client
 from src.retrieval import retrieve
 

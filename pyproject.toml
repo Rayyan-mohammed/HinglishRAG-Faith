@@ -1,0 +1,22 @@
+[project]
+name = "codeswitch-verify"
+version = "0.1.0"
+description = "Faithfulness-checked RAG for Hinglish government-scheme Q&A"
+authors = [{ name = "Rayyan Mohammed" }]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "groq",
+    "sentence-transformers",
+    "faiss-cpu",
+    "pandas",
+    "numpy",
+    "python-dotenv",
+    "tqdm",
+]
+
+[dependency-groups]
+dev = ["pytest"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

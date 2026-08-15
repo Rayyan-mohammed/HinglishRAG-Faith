@@ -2,7 +2,7 @@
 
 from groq import Groq
 
-from src.config import GENERATOR_MODEL, GROQ_API_KEY
+from config.settings import GENERATOR_MODEL, GROQ_API_KEY
 
 _client = None
 

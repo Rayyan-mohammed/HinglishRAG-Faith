@@ -18,23 +18,32 @@ text before being shown to the user, so unsupported claims get flagged instead o
 ## Setup
 
 ```
-pip install -r requirements.txt
+uv sync
 cp .env.example .env   # add your Groq API key
 ```
 
 Add scheme documents (plain text) to `data/schemes/`, then build the index:
 
 ```
-python scripts/build_index.py
+uv run scripts/build_index.py
+```
+
+Run tests:
+
+```
+uv run pytest
 ```
 
 ## Project layout
 
 ```
+config/         settings (model names, paths, API key loading)
 src/            pipeline code (retrieval, generation, decomposition, verification, evaluation)
 scripts/        CLI entry points
+tests/          unit tests
 data/schemes/   source government scheme documents
 eval/           hand-labelled evaluation set
+docs/           project blueprint and planning docs (not pushed)
 ```
 
 ## Status

@@ -7,7 +7,7 @@ import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-from src.config import DATA_DIR, EMBEDDING_MODEL, INDEX_DIR, TOP_K
+from config.settings import DATA_DIR, EMBEDDING_MODEL, INDEX_DIR, TOP_K
 
 _model = None
 

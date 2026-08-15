@@ -1,6 +1,6 @@
 """End-to-end orchestration: retrieve, generate, decompose, verify, aggregate."""
 
-from src.config import TOP_K
+from config.settings import TOP_K
 from src.decomposition import decompose
 from src.generation import generate_answer
 from src.retrieval import retrieve

@@ -16,6 +16,8 @@ outputs/
 *.log
 
 .ipynb_checkpoints/
+.pytest_cache/
+.cache/
 .DS_Store
 
 # project docs (kept local, not pushed)
