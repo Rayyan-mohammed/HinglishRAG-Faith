@@ -53,10 +53,11 @@ Returned by retrieval, consumed by generation and verification.
   `{"precision": float, "recall": float, "tp": int, "fp": int, "fn": int}`
 - `answer_level_catch_rate(answers: list[{"has_hallucination": bool, "flagged": bool}]) -> float`
 
-## Data formats (proposed, not yet built — confirm before B1/B2 lock these in)
+## Data formats (proposed, not yet built — confirm before these get locked in)
 
-Input test set lives in `eval/`. Pipeline outputs (generated answers, verifier results,
-computed metrics) live in `results/` — see `results/README.md`.
+Input test set (questions, ground truth) lives in `eval/`. Where pipeline outputs (generated
+answers, verifier results, computed metrics) get stored hasn't been decided yet — pick a location
+when that work actually starts and record it here.
 
 ### `eval/questions.csv`
 | column | type | notes |
@@ -73,14 +74,14 @@ computed metrics) live in `results/` — see `results/README.md`.
 | `label` | str | `fully_correct` / `partially_hallucinated` / `fully_hallucinated` |
 | `notes` | str | optional, why this label |
 
-### `results/generated_answers.csv` (built in A2, one row per question, per pipeline variant)
+### `generated_answers.csv` (one row per question, per pipeline variant)
 | column | type | notes |
 |---|---|---|
 | `question_id` | int | |
 | `pipeline` | str | `plain` or `verified` |
 | `answer` | str | raw generated text |
 
-### `results/verifier_results.csv` (built in B3)
+### `verifier_results.csv`
 | column | type | notes |
 |---|---|---|
 | `question_id` | int | |
@@ -89,5 +90,5 @@ computed metrics) live in `results/` — see `results/README.md`.
 | `confidence` | float | |
 | `evidence_source` | str | which scheme doc the evidence came from |
 
-Once A2/B2/B3 actually produce these files, update this section to match reality if the
+Once these files actually get produced, update this section to match reality if the
 implementation diverges from the plan above.

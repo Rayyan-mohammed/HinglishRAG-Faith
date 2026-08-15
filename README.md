@@ -74,7 +74,6 @@ scripts/        CLI entry points
 tests/          unit tests
 data/schemes/   source government scheme documents
 eval/           hand-labelled evaluation set (input questions + ground-truth labels)
-results/        pipeline outputs (generated answers, verifier results, computed metrics)
 demo/           working demo (Objective O6)
 notebooks/      exploratory/prototyping work
 docs/           planning docs, decision log, contracts, per-phase notes, figures
@@ -95,4 +94,4 @@ objective closes out; see `docs/objective1_result.md` through `docs/objective6_r
 
 Week 1: project scaffold + retrieval/generation/verification skeleton in place. Scheme documents
 and the evaluation question set are next. See [`docs/problems_and_decisions.md`](docs/problems_and_decisions.md)
-for the running decision log, and `docs/A*`/`docs/B*` for per-week task tracking.
+for the running decision log.
