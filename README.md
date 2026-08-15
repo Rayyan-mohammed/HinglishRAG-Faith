@@ -51,8 +51,14 @@ uv sync
 cp .env.example .env   # add your Groq API key
 ```
 
-Add rows to `data/schemes/scheme_facts.csv` (one atomic fact per row, sourced from an official
-`.gov.in` page or document), then build the index:
+Fetch the scheme facts dataset live from official `.gov.in` sources (writes one CSV per scheme
+to `data/schemes/`):
+
+```
+uv run scripts/fetch_scheme_data.py
+```
+
+Then build the index:
 
 ```
 uv run scripts/build_index.py
@@ -73,7 +79,7 @@ config/         settings (model names, paths, API key loading)
 src/            pipeline code (retrieval, generation, decomposition, verification, evaluation)
 scripts/        CLI entry points
 tests/          unit tests
-data/schemes/   scheme_facts.csv — structured, sourced government scheme facts
+data/schemes/   one CSV per scheme, structured facts fetched live from official .gov.in sources
 eval/           hand-labelled evaluation set (input questions + ground-truth labels)
 demo/           working demo (Objective O6)
 notebooks/      exploratory/prototyping work
@@ -97,8 +103,8 @@ Week 1: project scaffold in place. Track B done: 60-question Hinglish evaluation
 (`eval/questions.csv`) across 4 fixed schemes, claim decomposition tested against hand-written
 Hinglish samples, verifier prompt drafted and ready to test on 5 sample claim/evidence pairs
 (`scripts/test_verifier_samples.py`, needs a Groq key to run). Track A done: structured scheme
-facts dataset (`data/schemes/scheme_facts.csv`) built from official sources across all 4 schemes
-(PM-KISAN, Ayushman Bharat, PM Awas Yojana, Post-Matric Scholarship), bge-m3 + FAISS index builds
-and returns sensible passages for Hinglish queries, Groq API key confirmed working with a live
-chat completion call. See
+facts dataset — one CSV per scheme in `data/schemes/`, fetched live from official sources by
+`scripts/fetch_scheme_data.py` — across all 4 schemes (PM-KISAN, Ayushman Bharat, PM Awas Yojana,
+Post-Matric Scholarship), bge-m3 + FAISS index builds and returns sensible passages for Hinglish
+queries, Groq API key confirmed working with a live chat completion call. See
 [`docs/problems_and_decisions.md`](docs/problems_and_decisions.md) for the running decision log.

@@ -13,6 +13,7 @@ dependencies = [
     "numpy",
     "python-dotenv",
     "tqdm",
+    "pypdf>=6.16.1",
 ]
 
 [dependency-groups]

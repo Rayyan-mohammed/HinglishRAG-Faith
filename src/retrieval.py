@@ -2,13 +2,14 @@
 
 import os
 import pickle
+from pathlib import Path
 
 import faiss
 import numpy as np
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 
-from config.settings import EMBEDDING_MODEL, INDEX_DIR, SCHEMES_CSV, TOP_K
+from config.settings import EMBEDDING_MODEL, INDEX_DIR, SCHEMES_DIR, TOP_K
 
 _model = None
 
@@ -20,14 +21,17 @@ def get_embedder():
     return _model
 
 
-def build_index(csv_path=SCHEMES_CSV, index_dir=INDEX_DIR):
+def build_index(schemes_dir=SCHEMES_DIR, index_dir=INDEX_DIR):
     embedder = get_embedder()
-    df = pd.read_csv(csv_path)
 
-    passages = [{"source": row.scheme, "text": row.fact} for row in df.itertuples()]
+    passages = []
+    for csv_path in sorted(Path(schemes_dir).glob("*.csv")):
+        scheme = csv_path.stem
+        df = pd.read_csv(csv_path)
+        passages.extend({"source": scheme, "text": row.fact} for row in df.itertuples())
 
     if not passages:
-        raise ValueError(f"No facts found in {csv_path}")
+        raise ValueError(f"No facts found in {schemes_dir}")
 
     embeddings = embedder.encode([p["text"] for p in passages], normalize_embeddings=True)
     embeddings = np.array(embeddings, dtype="float32")
