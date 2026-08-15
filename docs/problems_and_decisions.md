@@ -54,12 +54,7 @@ Running log. Append new entries at the bottom of each section, don't rewrite his
 **Why:** B1 needs to test the verifier prompt on 5 hand-written claim/evidence pairs before any retrieval index exists. Splitting the functions means that test doesn't need a fake index or fake passages.
 **Impact:** None to existing behavior — `verify_claim()`'s output is unchanged, just calls through `judge()` now.
 
-## Problems Encountered
-
-No problems logged yet. Add entries as they come up, in this format:
-
-### P-001: [short title]
-**Week:**
-**Problem:**
-**Fix:**
-**Lesson:**
+### ADR-011: `data/schemes/` is a structured facts CSV, not free-text documents
+**Decision:** Replaced the earlier plain-text scheme documents in `data/schemes/` with a single `scheme_facts.csv` (columns: `scheme`, `category`, `fact`, `source_url`). Each row is one atomic, close-to-verbatim fact taken from an official `.gov.in` source. `src/retrieval.py`'s `build_index()` now reads this CSV directly and embeds each row's `fact` as its own passage — the old `chunk_text()` word-splitting step was removed since rows are already short enough to embed without chunking.
+**Why:** Partner A wanted a structured, auditable dataset (one row per fact, with its source URL) rather than prose documents, so every fact fed to the pipeline can be traced back to its official source.
+**Impact:** Retrieval quality trade-off, flagged before implementing: bge-m3 embeddings of short atomic facts about the same scheme are more similar to each other than embeddings of full prose paragraphs, so at low `top_k` (e.g. `verify_claim()`'s default of 2) the single most relevant fact can occasionally rank below other facts about the same scheme. At the project's default `TOP_K=4` this wasn't observed to be a problem in spot checks, but it's worth watching during Week 3 error analysis — if per-claim verification (`top_k=2`) starts missing evidence that's clearly present in the dataset, raising that default is the first thing to try.

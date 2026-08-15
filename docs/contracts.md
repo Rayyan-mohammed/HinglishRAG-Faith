@@ -20,7 +20,7 @@ Returned by retrieval, consumed by generation and verification.
 ## Function contracts (current, as implemented)
 
 ### `src/retrieval.py`
-- `build_index(data_dir, index_dir) -> (faiss.Index, list[passage])` — reads all files in `data_dir`, chunks them, embeds with bge-m3, writes index + passages to `index_dir`.
+- `build_index(csv_path, index_dir) -> (faiss.Index, list[passage])` — reads `data/schemes/scheme_facts.csv` (one row = one atomic fact, already short enough to embed directly — no chunking), embeds each fact with bge-m3, writes index + passages to `index_dir`. `passage["source"]` is the `scheme` value from the CSV (e.g. `"PM-KISAN"`), not a filename.
 - `load_index(index_dir) -> (faiss.Index, list[passage])`
 - `retrieve(query: str, index, passages, top_k: int) -> list[passage]`
 
@@ -60,9 +60,19 @@ answers, verifier results, computed metrics) get stored hasn't been decided yet 
 when that work actually starts and record it here.
 
 Scheme list is fixed at 4 (see ADR-009 in `problems_and_decisions.md`): **PM-KISAN**,
-**Ayushman Bharat**, **Post-Matric Scholarship**, **PM Awas Yojana**. `data/schemes/` should end
-up with one cleaned document per scheme using these exact names, so `scheme` values in
-`questions.csv` join cleanly to source documents once A collects them.
+**Ayushman Bharat**, **Post-Matric Scholarship**, **PM Awas Yojana**, using these exact strings so
+`scheme` values in `questions.csv` join cleanly to `data/schemes/scheme_facts.csv`.
+
+### `data/schemes/scheme_facts.csv` — built (A1), structured dataset consumed directly by retrieval
+| column | type | notes |
+|---|---|---|
+| `scheme` | str | one of the 4 fixed scheme names; becomes `passage["source"]` |
+| `category` | str | eligibility / amount / documents / deadline / process |
+| `fact` | str | one atomic, natural-language fact, close to verbatim from the official `.gov.in` source; becomes `passage["text"]` |
+| `source_url` | str | the official page/document the fact was taken from |
+
+Each row is embedded as-is (no chunking — facts are already short). See ADR-011 in
+`problems_and_decisions.md` for why this replaced free-text scheme documents.
 
 ### `eval/questions.csv` — built, 60 questions (15 per scheme, 4 categories each)
 | column | type | notes |

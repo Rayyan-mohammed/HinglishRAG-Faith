@@ -10,6 +10,7 @@ VERIFIER_MODEL = "llama-3.3-70b-versatile"
 EMBEDDING_MODEL = "BAAI/bge-m3"
 
 DATA_DIR = "data/schemes"
+SCHEMES_CSV = "data/schemes/scheme_facts.csv"
 INDEX_DIR = "index"
 EVAL_DIR = "eval"
 
