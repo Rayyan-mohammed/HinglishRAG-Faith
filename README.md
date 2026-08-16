@@ -109,10 +109,10 @@ sources per scheme, fetched live by `scripts/fetch_scheme_data.py` (PM-KISAN 43,
 sensible passages for Hinglish queries, Groq API key confirmed working with a live chat
 completion call.
 
-Week 2: Track A in progress — `scripts/generate_answers.py` runs the plain retrieve-then-generate
+Week 2: Track A done — `scripts/generate_answers.py` runs the plain retrieve-then-generate
 pipeline over every question in `eval/questions.csv` and writes `results/generated_answers.csv`.
-56 of 60 answers generated so far (all consistently in Hinglish, no prompt tuning needed); the
-remaining 4 (PM Awas Yojana / documents category) are blocked on Groq's free-tier 100k-tokens/day
-limit — see P-001 in `docs/problems_and_decisions.md`. Re-run the same script once the quota
-resets; it resumes from where it left off. See
+All 60 answers generated, all consistently in Hinglish, no prompt tuning needed. Generation hit
+Groq's free-tier 100k-tokens/day limit twice along the way (see P-001 in
+`docs/problems_and_decisions.md`) — the script is resumable, so re-running it after each reset
+picked up where it left off until all 60 were done. See
 [`docs/problems_and_decisions.md`](docs/problems_and_decisions.md) for the running decision log.
