@@ -92,9 +92,8 @@ objectives close out.
 
 ## Status
 
-Week 1: project scaffold in place. Track B done: 60-question Hinglish evaluation set
-(`eval/questions.csv`) across 4 fixed schemes, claim decomposition tested against hand-written
-Hinglish samples, verifier prompt drafted and ready to test on 5 sample claim/evidence pairs
-(`scripts/test_verifier_samples.py`, needs a Groq key to run). Track A's retrieval pipeline and
-scheme document collection still outstanding. See
+Week 1: Track B done — 60-question Hinglish evaluation set (`eval/questions.csv`) across 4 fixed
+schemes, claim decomposition tested against hand-written Hinglish samples, verifier prompt tested
+on 5 sample claim/evidence pairs (`scripts/test_verifier_samples.py`, 5/5 matched expected
+verdict). Track A's retrieval pipeline and scheme document collection still outstanding. See
 [`docs/problems_and_decisions.md`](docs/problems_and_decisions.md) for the running decision log.
