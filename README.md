@@ -99,20 +99,20 @@ objectives close out.
 
 ## Status
 
-Week 1: project scaffold in place. Track B done: 60-question Hinglish evaluation set
-(`eval/questions.csv`) across 4 fixed schemes, claim decomposition tested against hand-written
-Hinglish samples, verifier prompt drafted and ready to test on 5 sample claim/evidence pairs
-(`scripts/test_verifier_samples.py`, needs a Groq key to run). Track A done: structured scheme
-facts dataset — one CSV per scheme in `data/schemes/`, 172 facts total across multiple official
-sources per scheme, fetched live by `scripts/fetch_scheme_data.py` (PM-KISAN 43, Ayushman Bharat
-37, PM Awas Yojana 58, Post-Matric Scholarship 34), bge-m3 + FAISS index builds and returns
-sensible passages for Hinglish queries, Groq API key confirmed working with a live chat
-completion call.
+Week 1 done, both tracks. Track B: 60-question Hinglish evaluation set (`eval/questions.csv`)
+across 4 fixed schemes, claim decomposition tested against hand-written Hinglish samples, verifier
+prompt tested on 5 sample claim/evidence pairs (`scripts/test_verifier_samples.py`, 5/5 matched
+expected verdict). Track A: structured scheme facts dataset — one CSV per scheme in
+`data/schemes/`, 172 facts total across multiple official sources per scheme, fetched live by
+`scripts/fetch_scheme_data.py` (PM-KISAN 43, Ayushman Bharat 37, PM Awas Yojana 58, Post-Matric
+Scholarship 34), bge-m3 + FAISS index builds and returns sensible passages for Hinglish queries,
+Groq API key confirmed working with a live chat completion call.
 
 Week 2: Track A done — `scripts/generate_answers.py` runs the plain retrieve-then-generate
 pipeline over every question in `eval/questions.csv` and writes `results/generated_answers.csv`.
 All 60 answers generated, all consistently in Hinglish, no prompt tuning needed. Generation hit
 Groq's free-tier 100k-tokens/day limit twice along the way (see P-001 in
 `docs/problems_and_decisions.md`) — the script is resumable, so re-running it after each reset
-picked up where it left off until all 60 were done. See
+picked up where it left off until all 60 were done. Track B (manual labelling, decomposition
+against real answers, per-claim retrieval) not started yet. See
 [`docs/problems_and_decisions.md`](docs/problems_and_decisions.md) for the running decision log.
