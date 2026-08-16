@@ -51,7 +51,14 @@ uv sync
 cp .env.example .env   # add your Groq API key
 ```
 
-Add scheme documents (plain text) to `data/schemes/`, then build the index:
+Fetch the scheme facts dataset live from official `.gov.in` sources (writes one CSV per scheme
+to `data/schemes/`):
+
+```
+uv run scripts/fetch_scheme_data.py
+```
+
+Then build the index:
 
 ```
 uv run scripts/build_index.py
@@ -72,7 +79,7 @@ config/         settings (model names, paths, API key loading)
 src/            pipeline code (retrieval, generation, decomposition, verification, evaluation)
 scripts/        CLI entry points
 tests/          unit tests
-data/schemes/   source government scheme documents
+data/schemes/   one CSV per scheme, structured facts fetched live from official .gov.in sources
 eval/           hand-labelled evaluation set (input questions + ground-truth labels)
 demo/           working demo (Objective O6)
 notebooks/      exploratory/prototyping work
@@ -92,8 +99,13 @@ objectives close out.
 
 ## Status
 
-Week 1: Track B done — 60-question Hinglish evaluation set (`eval/questions.csv`) across 4 fixed
-schemes, claim decomposition tested against hand-written Hinglish samples, verifier prompt tested
-on 5 sample claim/evidence pairs (`scripts/test_verifier_samples.py`, 5/5 matched expected
-verdict). Track A's retrieval pipeline and scheme document collection still outstanding. See
+Week 1 done, both tracks. Track B: 60-question Hinglish evaluation set (`eval/questions.csv`)
+across 4 fixed schemes, claim decomposition tested against hand-written Hinglish samples, verifier
+prompt tested on 5 sample claim/evidence pairs (`scripts/test_verifier_samples.py`, 5/5 matched
+expected verdict). Track A: structured scheme facts dataset — one CSV per scheme in
+`data/schemes/`, 172 facts total across multiple official sources per scheme, fetched live by
+`scripts/fetch_scheme_data.py` (PM-KISAN 43, Ayushman Bharat 37, PM Awas Yojana 58, Post-Matric
+Scholarship 34), bge-m3 + FAISS index builds and returns sensible passages for Hinglish queries,
+Groq API key confirmed working with a live chat completion call. Week 2 (answer generation,
+ground-truth labelling) not started yet. See
 [`docs/problems_and_decisions.md`](docs/problems_and_decisions.md) for the running decision log.

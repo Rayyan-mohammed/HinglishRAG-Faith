@@ -1,13 +1,15 @@
-"""Dense retrieval over the government scheme documents using bge-m3 + FAISS."""
+"""Dense retrieval over the government scheme facts dataset using bge-m3 + FAISS."""
 
 import os
 import pickle
+from pathlib import Path
 
 import faiss
 import numpy as np
+import pandas as pd
 from sentence_transformers import SentenceTransformer
 
-from config.settings import DATA_DIR, EMBEDDING_MODEL, INDEX_DIR, TOP_K
+from config.settings import EMBEDDING_MODEL, INDEX_DIR, SCHEMES_DIR, TOP_K
 
 _model = None
 
@@ -19,32 +21,17 @@ def get_embedder():
     return _model
 
 
-def chunk_text(text, chunk_size=500, overlap=100):
-    words = text.split()
-    chunks = []
-    start = 0
-    while start < len(words):
-        end = start + chunk_size
-        chunks.append(" ".join(words[start:end]))
-        start += chunk_size - overlap
-    return chunks
-
-
-def build_index(data_dir=DATA_DIR, index_dir=INDEX_DIR):
+def build_index(schemes_dir=SCHEMES_DIR, index_dir=INDEX_DIR):
     embedder = get_embedder()
-    passages = []
 
-    for fname in sorted(os.listdir(data_dir)):
-        path = os.path.join(data_dir, fname)
-        if not os.path.isfile(path):
-            continue
-        with open(path, encoding="utf-8") as f:
-            text = f.read()
-        for chunk in chunk_text(text):
-            passages.append({"source": fname, "text": chunk})
+    passages = []
+    for csv_path in sorted(Path(schemes_dir).glob("*.csv")):
+        scheme = csv_path.stem
+        df = pd.read_csv(csv_path)
+        passages.extend({"source": scheme, "text": row.fact} for row in df.itertuples())
 
     if not passages:
-        raise ValueError(f"No documents found in {data_dir}")
+        raise ValueError(f"No facts found in {schemes_dir}")
 
     embeddings = embedder.encode([p["text"] for p in passages], normalize_embeddings=True)
     embeddings = np.array(embeddings, dtype="float32")
