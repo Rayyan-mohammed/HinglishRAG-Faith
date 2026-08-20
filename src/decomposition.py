@@ -14,7 +14,9 @@ _connector_pattern = re.compile(
 
 
 def split_sentences(text):
-    return [s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if s.strip()]
+    # Negative lookbehind for "Rs." keeps rupee amounts (e.g. "Rs. 6.00 lakhs") from being
+    # mistaken for a sentence boundary — see P-002 in docs/problems_and_decisions.md.
+    return [s.strip() for s in re.split(r"(?<!Rs\.)(?<=[.!?])\s+", text) if s.strip()]
 
 
 def split_on_connectors(sentence):

@@ -115,13 +115,16 @@ Groq's free-tier 100k-tokens/day limit twice along the way (see P-001 in
 `docs/problems_and_decisions.md`) — the script is resumable, so re-running it after each reset
 picked up where it left off until all 60 were done.
 
-Week 3: Track A in progress. Plain-RAG baseline confirmed — the 60 `pipeline == "plain"` rows in
+Week 3: Track A done. Plain-RAG baseline confirmed — the 60 `pipeline == "plain"` rows in
 `results/generated_answers.csv` from Week 2 are the unverified comparison condition, no separate
 build needed. Demo skeleton done: `demo/app.py` (Streamlit) takes a Hinglish question, retrieves,
 generates, and shows the answer plus retrieved sources — claim tags come later once B wires the
-verifier in. Along the way, found Groq had removed `llama-3.3-70b-versatile` from its catalog
-entirely, breaking generation and verification for the whole team; swapped `GENERATOR_MODEL`/
-`VERIFIER_MODEL` to `openai/gpt-oss-120b` (see P-003). Also proactively tested claim decomposition
-against all 60 real answers and found 2 mis-split cases, logged as P-002 for B3. Track B (verifier
-wiring, full verified run, precision/recall) not started yet. See
+verifier in. Support/integration fixes: tested claim decomposition against all 60 real answers
+and found 2 mis-split cases (P-002) — fixed the unambiguous one (an "Rs." abbreviation was
+mistaken for a sentence boundary) directly with a regression test added, left the other (a
+compound-subject "aur" split) alone since it's an intentionally-documented limitation owned by
+B3. Along the way, found Groq had removed `llama-3.3-70b-versatile` from its catalog entirely,
+breaking generation and verification for the whole team; swapped `GENERATOR_MODEL`/
+`VERIFIER_MODEL` to `openai/gpt-oss-120b` (see P-003). Track B (verifier wiring, full verified
+run, precision/recall) not started yet. See
 [`docs/problems_and_decisions.md`](docs/problems_and_decisions.md) for the running decision log.
