@@ -63,3 +63,15 @@ def test_claims_have_no_trailing_punctuation():
     answer = "Aapko form fill karna hoga, aur documents attach karne honge."
     claims = decompose(answer)
     assert all(not c.endswith((",", ".")) for c in claims)
+
+
+def test_rs_abbreviation_does_not_split_sentence():
+    """'Rs.' followed by an amount was being mistaken for a sentence boundary, producing
+    a lone 'Rs' fragment — found running decompose() on real generated answers (P-002 in
+    docs/problems_and_decisions.md)."""
+    answer = (
+        "EWS households ke liye annual income upto Rs. 3.00 lakhs hai, aur LIG households "
+        "ke liye annual income Rs. 3.00 lakhs se Rs. 6.00 lakhs ke beech hai."
+    )
+    claims = decompose(answer)
+    assert not any(c == "Rs" for c in claims)
