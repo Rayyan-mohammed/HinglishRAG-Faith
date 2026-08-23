@@ -108,6 +108,15 @@ these numbers anywhere.
 Full breakdown in [`results/metrics.md`](results/metrics.md); why precision is weak and what
 specifically got missed or over-flagged is in [`docs/error_analysis.md`](docs/error_analysis.md).
 
+## Final report
+
+- [`docs/report_architecture_and_implementation.md`](docs/report_architecture_and_implementation.md)
+  — system architecture, implementation notes per pipeline stage, tech stack (A4)
+- [`docs/report_evaluation_and_results.md`](docs/report_evaluation_and_results.md) — evaluation
+  methodology, results, limitations (B4)
+- [`docs/error_analysis.md`](docs/error_analysis.md) — verifier mistakes reviewed in detail (B4)
+- [`docs/slides.md`](docs/slides.md) — presentation slides (A4)
+
 ## Status
 
 Week 1 done, both tracks. Track B: 60-question Hinglish evaluation set (`eval/questions.csv`)
@@ -147,8 +156,17 @@ computed (`results/metrics.md`, see Results above). Error analysis done
 (wrong-scheme retrieval, and mishandling of "no info" claims — P-006) and reviewed all 6 false
 negatives individually. Evaluation methodology and results report sections written
 (`docs/report_evaluation_and_results.md`). Results chart generated
-(`docs/figures/results_chart.png`). Track A's Week 4 (demo claim-tagging, architecture/
-implementation report sections, slides) not started.
+(`docs/figures/results_chart.png`).
+
+Track A done. Demo finished: `demo/app.py` now runs the full verified pipeline and shows each
+claim colour-tagged (🟢 SUPPORTED / 🔴 CONTRADICTED / 🟡 UNVERIFIABLE) with its confidence score,
+beside the plain untagged answer. Manually testing it surfaced a real data-quality bug — two
+rupee amounts corrupted during PDF extraction (`Rs.6000` → `Rs.60001`) in
+`data/schemes/PM-KISAN.csv` — fixed directly and documented (P-007), since a "supported, high
+confidence" verdict only means a claim matches its evidence, not that the evidence is correct.
+Architecture and implementation report sections written
+(`docs/report_architecture_and_implementation.md`), pairing with Track B's evaluation/results
+sections. Presentation slides prepared (`docs/slides.md`).
 
 See [`docs/problems_and_decisions.md`](docs/problems_and_decisions.md) for the running decision
 log.
