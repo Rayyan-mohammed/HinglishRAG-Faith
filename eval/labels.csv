@@ -1,0 +1,61 @@
+question_id,label,notes,reviewed_by_human
+1,fully_correct,"1 acre + cultivable land = eligible, matches facts (all farmer families now eligible regardless of size; only non-cultivable micro-holdings excluded)",FALSE
+2,partially_hallucinated,"claims no info given on rented-land farmers; source establishes land must be owned per land records in own name, implying tenant/rented-land farmers are excluded",FALSE
+3,fully_hallucinated,"claims exclusion criteria not covered in context; source explicitly excludes government employees (serving/retired officers not eligible)",FALSE
+4,fully_correct,"correctly explains SMF 2-hectare initial cap later removed for all farmer families",FALSE
+5,fully_correct,"correctly notes no exact date given, explains 4-month installment cycle accurately",FALSE
+6,fully_correct,"correctly says no new-registration deadline is in the source",FALSE
+7,fully_correct,"correctly says no eKYC deadline is in the source (not covered by these documents)",FALSE
+8,fully_correct,"Rs 6000/year in 3x Rs 2000 installments, matches source exactly",FALSE
+9,fully_correct,"matches source exactly",FALSE
+10,partially_hallucinated,"amount figures correct, but ""same across all states"" is asserted with confidence though not explicitly stated anywhere in source",FALSE
+11,fully_correct,"matches source on delayed-approval beneficiaries still receiving back-installments",FALSE
+12,fully_correct,"matches required documents list",FALSE
+13,fully_correct,"matches Aadhaar-mandatory rule plus Assam/Meghalaya/J&K exemption",FALSE
+14,partially_hallucinated,"vague; cites a PM Awas Yojana fact (ownership proof of land) as supporting evidence for a PM-KISAN question -- cross-scheme retrieval bleed",FALSE
+15,fully_correct,"matches bank account/IFSC/Aadhaar verification facts",FALSE
+16,partially_hallucinated,"answers using only the Haryana-specific sub-scheme criteria; omits the general SECC-2011 database eligibility criterion which is the primary answer",FALSE
+17,fully_correct,"honestly declines to confirm private-sector-employee coverage since source doesn't address employment sector directly",FALSE
+18,fully_correct,"matches SECC list requirement exactly",FALSE
+19,fully_correct,"correctly notes coverage is SECC-2011-based, not strictly labelled BPL",FALSE
+20,fully_correct,"correctly says no last date is mentioned in source",FALSE
+21,fully_correct,"correctly says claim-submission time limit isn't in source",FALSE
+22,fully_correct,"correctly says card renewal specifics aren't in source",FALSE
+23,fully_correct,"matches Rs 5 lakh family floater cover fact",FALSE
+24,fully_hallucinated,"claims context doesn't say whether cover is one-time or annual; source explicitly says cover is ""per annum"" (i.e. it is a yearly/renewing benefit) in multiple facts",FALSE
+25,fully_correct,"matches Rs 5 lakh cap with beneficiary paying excess",FALSE
+26,partially_hallucinated,"cover amount correct, but ""not different by state"" is asserted though never explicitly stated in source",FALSE
+27,fully_correct,"matches required documents list exactly",FALSE
+28,fully_correct,"matches required documents list",FALSE
+29,fully_correct,"reasonably declines since source doesn't specify an ID to show at hospital specifically (only lists card-issuance documents)",FALSE
+30,partially_hallucinated,"Driving Licence/Voter ID/NREGA Job Card are PM-KISAN's alternate-ID documents, not Ayushman Bharat's (whose documents are PM/CM entitlement letter, ration card, Aadhaar) -- cross-scheme contamination",FALSE
+31,fully_correct,"matches eligibility conditions (SC, post-matric course, income ceiling, passed matriculation)",FALSE
+32,fully_correct,"matches SC-only eligibility (minor simplification: source also lists Neo-Buddhist under the Maharashtra variant, not incorrect)",FALSE
+33,fully_correct,"matches Rs 2.5 lakh income ceiling exactly",FALSE
+34,fully_correct,"matches Group IV explicitly including diploma/polytechnic courses",FALSE
+35,fully_correct,"matches May-June announcement timing, no fixed universal deadline, state-set dates",FALSE
+36,fully_correct,"correctly says renewal application date isn't specified in source",FALSE
+37,fully_correct,"correctly says result-turnaround time isn't specified in source",FALSE
+38,fully_correct,"matches detailed Group I-IV maintenance allowance figures (hosteller/day-scholar) exactly",FALSE
+39,fully_correct,"matches course-group-based and hosteller/day-scholar variation",FALSE
+40,partially_hallucinated,"uses the Maharashtra-specific hostel rate (Rs 400-1350/month) without noting it's state-specific, inconsistent with the general Group I-IV national rates already given correctly in Q38's answer",FALSE
+41,fully_correct,"matches direct bank transfer, cash payment explicitly avoided per source",FALSE
+42,fully_correct,"matches required documents list",FALSE
+43,fully_hallucinated,"claims no info on which authority issues the income certificate; source specifies employer for employed parents, self-declaration affidavit for self-employed",FALSE
+44,fully_hallucinated,"claims caste certificate is not mandatory; source explicitly lists it as a required application document (signed by an authorised Revenue Officer)",FALSE
+45,partially_hallucinated,"question is about Post-Matric Scholarship documents but answer dumps document lists for all 3 other schemes instead of focusing on the one asked about -- retrieval scoping failure",FALSE
+46,fully_correct,"matches beneficiary definition (no pucca house) plus EWS priority",FALSE
+47,fully_correct,"matches pucca-house exclusion and the <21sqm enhancement exception",FALSE
+48,fully_correct,"matches EWS/LIG income bands exactly",FALSE
+49,partially_hallucinated,"""do models"" (public/private) describes the AHP vertical's internal split specifically, not the whole PMAY(U) scheme's structure, which actually has 4 verticals (ISSR/CLSS/AHP/BLC)",FALSE
+50,fully_correct,"matches launch date, 2022 target, correctly says no application deadline given",FALSE
+51,partially_hallucinated,"retrieval failure: claims context only covers PM-KISAN and Post-Matric Scholarship; relevant PM Awas Yojana facts on fund-release timelines exist in source but weren't surfaced/used",FALSE
+52,partially_hallucinated,"cites Ayushman Bharat's status-check URL as if relevant to a PM Awas Yojana question; wrong scheme, no PMAY-specific status-check info given",FALSE
+53,fully_correct,"matches interest subsidy rates (6.5%/4%/3%) exactly",FALSE
+54,fully_correct,"matches loan caps by category (Rs 6/9/12 lakh) exactly",FALSE
+55,fully_correct,"matches loan caps despite an odd but self-corrected meta-comment about Ayushman Bharat",FALSE
+56,fully_correct,"matches CLSS's one-time upfront subsidy mechanism (CNA to PLI to beneficiary)",FALSE
+57,fully_hallucinated,"claims no document info exists for PM Awas Yojana applications; source specifies land ownership proof and building plan as required",FALSE
+58,fully_hallucinated,"entire answer is actually Post-Matric Scholarship's income-certificate rule (employer certificate / self-employed affidavit); has nothing to do with PM Awas Yojana -- wrong scheme entirely",FALSE
+59,fully_correct,"matches property document requirements (ownership proof, building plan, economic status, layout exemption clause) exactly",FALSE
+60,partially_hallucinated,"Aadhaar/bank account requirement correctly sourced, but the claim that PAN card is NOT required is asserted with confidence though source never mentions PAN at all",FALSE
