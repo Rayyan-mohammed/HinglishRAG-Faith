@@ -1,6 +1,9 @@
 """Per-claim retrieval + LLM-as-judge verification against evidence."""
 
 import json
+import time
+
+from groq import RateLimitError
 
 from config.settings import VERIFIER_MODEL
 from src.generation import get_client
@@ -22,17 +25,29 @@ EVIDENCE: {evidence}
 """
 
 
-def judge(claim, evidence_text):
+def judge(claim, evidence_text, max_retries=5):
     """Core LLM-as-judge call: a claim against a block of evidence text.
-    No retrieval involved — usable directly on hand-written claim/evidence pairs."""
+    No retrieval involved — usable directly on hand-written claim/evidence pairs.
+    Retries on Groq's short-term tokens-per-minute rate limit (429), separate from the
+    longer daily-quota limit in P-001 which needs waiting out, not retrying."""
     client = get_client()
-    response = client.chat.completions.create(
-        model=VERIFIER_MODEL,
-        messages=[
-            {"role": "user", "content": VERDICT_PROMPT.format(claim=claim, evidence=evidence_text)}
-        ],
-        temperature=0,
-    )
+    for attempt in range(max_retries):
+        try:
+            response = client.chat.completions.create(
+                model=VERIFIER_MODEL,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": VERDICT_PROMPT.format(claim=claim, evidence=evidence_text),
+                    }
+                ],
+                temperature=0,
+            )
+            break
+        except RateLimitError:
+            if attempt == max_retries - 1:
+                raise
+            time.sleep(2**attempt)
 
     raw = response.choices[0].message.content.strip()
     try:

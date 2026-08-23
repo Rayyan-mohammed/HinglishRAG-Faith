@@ -94,21 +94,30 @@ documents.
 | `notes` | str | why this label, cites the specific supporting/contradicting fact |
 | `reviewed_by_human` | bool | `FALSE` until manually spot-checked; flip to `TRUE` per row after review, per ADR-012 |
 
-### `generated_answers.csv` (one row per question, per pipeline variant)
+### `results/generated_answers.csv` — built (A2), 60 rows, all `pipeline == "plain"`. No `"verified"` rows — see ADR-013.
 | column | type | notes |
 |---|---|---|
 | `question_id` | int | |
-| `pipeline` | str | `plain` or `verified` |
+| `pipeline` | str | always `plain` |
 | `answer` | str | raw generated text |
 
-### `verifier_results.csv`
+### `results/verifier_results.csv` — built (B3), 212 rows, one per decomposed claim across all 60 answers
+| column | type | notes |
+|---|---|---|
+| `question_id` | int | joins to `generated_answers.csv` and `questions.csv` |
+| `claim` | str | one decomposed atomic claim |
+| `verdict` | str | SUPPORTED / CONTRADICTED / UNVERIFIABLE |
+| `confidence` | float | |
+| `evidence_source` | str | which scheme's CSV the top retrieved passage came from |
+
+### `eval/claim_ground_truth.csv` — built (B3, see ADR-014), row-aligned with `verifier_results.csv`
 | column | type | notes |
 |---|---|---|
 | `question_id` | int | |
-| `claim` | str | |
-| `verdict` | str | SUPPORTED / CONTRADICTED / UNVERIFIABLE |
-| `confidence` | float | |
-| `evidence_source` | str | which scheme doc the evidence came from |
+| `claim` | str | must match `verifier_results.csv`'s claim text exactly (same row order) |
+| `true_hallucinated` | bool | derived from a claim-by-claim re-check of the 18 non-fully_correct answers |
 
-Once these files actually get produced, update this section to match reality if the
-implementation diverges from the plan above.
+### `results/metrics.md` — built (B3/B4 via `scripts/compute_metrics.py`)
+Precision/recall on flagged claims, answer-level catch rate (strict + loose), false-alarm rate
+on fully_correct answers. Regenerate by re-running the script after any change to
+`verifier_results.csv`, `claim_ground_truth.csv`, or `labels.csv`.
