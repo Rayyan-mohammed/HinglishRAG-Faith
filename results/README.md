@@ -10,6 +10,8 @@ labels. Formats are defined in [`../docs/contracts.md`](../docs/contracts.md):
   existing 60 `pipeline == "plain"` answers directly, does not re-generate them. See ADR-013 in
   `docs/problems_and_decisions.md` for why this replaced the original plan of re-running
   generation with verification "on" to get separate `pipeline == "verified"` rows.
-- computed precision/recall/answer-level catch rate — built in B4
+- computed precision/recall/answer-level catch rate — `metrics.md`, built in B3/B4 by
+  `scripts/compute_metrics.py`, using `eval/claim_ground_truth.csv` (claim-level ground truth,
+  ADR-014) alongside `eval/labels.csv`
 
 These are deliverables, not scratch output — commit them once they're produced, don't gitignore.
