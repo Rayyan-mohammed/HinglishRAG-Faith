@@ -19,6 +19,8 @@ Running log. Append new entries at the bottom of each section, don't rewrite his
 **Why:** Transparent, debuggable, sufficient at this scale; a full parser is unnecessary engineering for a 4-week course project.
 **Impact:** Known failure mode — will mis-split some code-mixed sentences. Mitigation is manual review of decomposition output during Week 3 (see B3) and adjusting the connector list, not a general fix.
 
+**Update (Week 4 error analysis, `docs/error_analysis.md`):** Found a second failure mode of the same kind: splitting a compound "context has *only* X and Y" claim on "aur" into "has X" + "has Y" silently drops the exhaustiveness qualifier ("only"), turning one false claim into two individually-true fragments. This directly caused 2 of the verifier's 6 false negatives (Q51). Same category of problem as the "aur"-as-compound-subject limitation above — a rule-based splitter has no way to know a connector is joining two objects of a shared qualifier rather than two independent statements. Not fixed, recorded as a second concrete example of this limitation's cost.
+
 ### ADR-004: FAISS flat index (in-memory, local), no vector DB server
 **Decision:** `IndexFlatIP` over normalized embeddings, rebuilt from scratch by `scripts/build_index.py`.
 **Why:** 3-5 documents means brute-force cosine similarity is instant; a server-backed vector DB would be pure overhead.

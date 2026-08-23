@@ -36,10 +36,10 @@ flowchart TD
 | Component | What it does | Implementation |
 |---|---|---|
 | Retrieval | Embeds the question and finds the closest passages in the scheme documents | `src/retrieval.py` — bge-m3 + FAISS flat index |
-| Generation | Answers the question in Hinglish, grounded only in retrieved passages | `src/generation.py` — Groq `llama-3.3-70b-versatile` |
+| Generation | Answers the question in Hinglish, grounded only in retrieved passages | `src/generation.py` — Groq `openai/gpt-oss-120b` (see P-003) |
 | Claim decomposition | Splits the generated answer into atomic, independently-checkable claims | `src/decomposition.py` — sentence + connector-word rules |
 | Per-claim retrieval | Re-retrieves evidence specific to each individual claim | `src/retrieval.py`, called per claim in `src/verification.py` |
-| Verification | Judges each claim against its evidence: supported / contradicted / unverifiable, with a confidence score | `src/verification.py` — Groq LLM-as-judge, JSON output |
+| Verification | Judges each claim against its evidence: supported / contradicted / unverifiable, with a confidence score | `src/verification.py` — Groq `openai/gpt-oss-120b` as LLM-as-judge, JSON output |
 | Aggregation | Combines per-claim verdicts back into the answer for display | `src/pipeline.py` |
 
 See [`docs/contracts.md`](docs/contracts.md) for exact function signatures and data formats.
@@ -81,21 +81,32 @@ scripts/        CLI entry points
 tests/          unit tests
 data/schemes/   one CSV per scheme, structured facts fetched live from official .gov.in sources
 eval/           hand-labelled evaluation set (input questions + ground-truth labels)
+results/        pipeline outputs (generated answers, verifier results, computed metrics)
 demo/           working demo (Objective O6)
 notebooks/      exploratory/prototyping work
-docs/           planning docs, decision log, contracts, per-phase notes, figures
+docs/           planning docs, decision log, contracts, per-phase notes, error analysis, figures
 ```
 
 ## Results
 
-Not yet available — pipeline is in Week 1 of a 4-week build. Results will be filled in as
-objectives close out.
+60 questions, 212 decomposed claims, 24 ground-truth hallucinated (claim-level). Every one of
+the 18 non-fully_correct answers reaches the plain (unverified) baseline unflagged — the verified
+pipeline's whole value is in the columns below. Ground truth is an AI-drafted first pass, pending
+human review (ADR-012, ADR-014) — read `docs/report_evaluation_and_results.md` before quoting
+these numbers anywhere.
 
-| Metric | Plain RAG | Verified RAG |
-|---|---|---|
-| Recall on hallucinated claims | — | — |
-| Precision on flagged claims | — | — |
-| Answer-level catch rate | — | — |
+| Metric | Value |
+|---|---|
+| Recall on hallucinated claims | 0.75 |
+| Precision on flagged claims | 0.21 |
+| Answer-level catch rate (strict) | 0.50 |
+| Answer-level catch rate (loose) | 0.78 |
+| False-alarm rate on correct answers | 0.62 |
+
+![Results chart](docs/figures/results_chart.png)
+
+Full breakdown in [`results/metrics.md`](results/metrics.md); why precision is weak and what
+specifically got missed or over-flagged is in [`docs/error_analysis.md`](docs/error_analysis.md).
 
 ## Status
 
@@ -125,6 +136,19 @@ mistaken for a sentence boundary) directly with a regression test added, left th
 compound-subject "aur" split) alone since it's an intentionally-documented limitation owned by
 B3. Along the way, found Groq had removed `llama-3.3-70b-versatile` from its catalog entirely,
 breaking generation and verification for the whole team; swapped `GENERATOR_MODEL`/
-`VERIFIER_MODEL` to `openai/gpt-oss-120b` (see P-003). Track B (verifier wiring, full verified
-run, precision/recall) not started yet. See
-[`docs/problems_and_decisions.md`](docs/problems_and_decisions.md) for the running decision log.
+`VERIFIER_MODEL` to `openai/gpt-oss-120b` (see P-003).
+
+Week 4: Track B done. Verifier wired into the full pipeline (`scripts/verify_answers.py`) and run
+on all 60 answers — 212 claims verified, resumable through a Groq TPM rate limit (P-005).
+Claim-level ground truth derived (`eval/claim_ground_truth.csv`, ADR-014) since the blueprint's
+answer-level labels can't compute Section 13.2's claim-level metrics directly. Precision/recall
+computed (`results/metrics.md`, see Results above). Error analysis done
+(`docs/error_analysis.md`) — traced the 66 false positives to two distinct, roughly equal causes
+(wrong-scheme retrieval, and mishandling of "no info" claims — P-006) and reviewed all 6 false
+negatives individually. Evaluation methodology and results report sections written
+(`docs/report_evaluation_and_results.md`). Results chart generated
+(`docs/figures/results_chart.png`). Track A's Week 4 (demo claim-tagging, architecture/
+implementation report sections, slides) not started.
+
+See [`docs/problems_and_decisions.md`](docs/problems_and_decisions.md) for the running decision
+log.
