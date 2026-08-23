@@ -86,12 +86,13 @@ documents.
 | `category` | str | eligibility / deadline / amount / documents |
 | `question` | str | Hinglish |
 
-### `eval/labels.csv` (ground truth, built in B2)
+### `eval/labels.csv` — built, 60 rows (ground truth, B2). See ADR-012.
 | column | type | notes |
 |---|---|---|
 | `question_id` | int | joins to `questions.csv` |
 | `label` | str | `fully_correct` / `partially_hallucinated` / `fully_hallucinated` |
-| `notes` | str | optional, why this label |
+| `notes` | str | why this label, cites the specific supporting/contradicting fact |
+| `reviewed_by_human` | bool | `FALSE` until manually spot-checked; flip to `TRUE` per row after review, per ADR-012 |
 
 ### `generated_answers.csv` (one row per question, per pipeline variant)
 | column | type | notes |
