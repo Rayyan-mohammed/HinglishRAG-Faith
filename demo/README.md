@@ -3,8 +3,9 @@
 Working demo for Objective O6: takes a Hinglish question, shows the generated answer with
 each claim tagged supported / contradicted / unverifiable.
 
-Started in A3 (skeleton: question in, answer out) — done. Finished in A4 (claim tags added) —
-not yet, waiting on B's verifier wiring (B1) landing in `src/pipeline.py`'s `verify=True` path.
+Started in A3 (skeleton: question in, answer out) — done. Finished in A4: each decomposed claim
+now shown colour-tagged (🟢 SUPPORTED / 🔴 CONTRADICTED / 🟡 UNVERIFIABLE) with its confidence
+score, via a checkbox toggling `answer_question(..., verify=True)`.
 
 Framework: Streamlit (`demo/app.py`), fastest to wire to `src/pipeline.answer_question()` at
 this scale. Run it with:
