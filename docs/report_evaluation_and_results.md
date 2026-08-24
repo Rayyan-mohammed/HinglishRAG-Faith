@@ -61,14 +61,25 @@ Full breakdown (TP/FP/FN counts) in `results/metrics.md`.
 every 4 genuine hallucinated claims, and 50% of answers containing a real hallucination have it
 correctly flagged. Precision is weak: only 1 in 5 flagged claims is an actual hallucination. This
 is not a small-sample artifact with an obvious single cause — `docs/error_analysis.md` traces the
-66 false positives to two distinct, roughly equal-sized mechanisms (wrong-scheme evidence
-retrieval, and the verifier mishandling claims that describe an *absence* of information), and
-the 6 false negatives to three further distinct causes (bundled claims, true-content-wrong-scheme
-cases the verifier structurally can't judge, and a decomposition qualifier-dropping bug). The
-"strict" vs "loose" catch-rate gap (0.50 vs 0.78) exists because 7 of the 18 flagged answers
-turned out, on claim-by-claim re-check, to have no individually-false claim at all — their
-problem was relevance or completeness, which a claim-level supported/contradicted check cannot
-catch by construction, independent of how well any single component performs.
+66 false positives to three distinct mechanisms, not two, after a systematic re-check corrected an
+earlier estimate that was based on too small a sample (see the correction on P-006 in
+`docs/problems_and_decisions.md`): wrong-scheme evidence retrieval (33, 50%); `decompose()`
+producing fragments that aren't complete checkable claims at all — bare entities, clauses that
+lost their antecedent (26, 39%, the largest single cause); and the verifier mishandling claims
+that describe an *absence* of information (7, 11%, smaller than first estimated). One further
+false positive is a confirmed artifact of verifying against a since-corrected data error (P-007),
+not a pipeline weakness. The 6 false negatives trace to three further distinct causes (bundled
+claims, true-content-wrong-scheme cases the verifier structurally can't judge, and a decomposition
+qualifier-dropping bug). The "strict" vs "loose" catch-rate gap (0.50 vs 0.78) exists because 7 of
+the 18 flagged answers turned out, on claim-by-claim re-check, to have no individually-false claim
+at all — their problem was relevance or completeness, which a claim-level supported/contradicted
+check cannot catch by construction, independent of how well any single component performs.
+
+Because a real share of the 66 false positives are decomposition noise (fragments too incomplete
+to be checkable claims) rather than verification failures, the headline 0.21 precision understates
+how the verifier performs on genuinely well-formed claims — tightening `decompose()` to drop
+degenerate fragments before verification is the single highest-value next step, ahead of both
+scheme-filtered retrieval and prompt changes for absence-claims.
 
 **Comparison to the plain (unverified) baseline:** every one of the 18 non-fully_correct answers
 would have reached the user completely unflagged under the plain pipeline — the baseline has, by

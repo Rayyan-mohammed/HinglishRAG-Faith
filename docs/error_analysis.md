@@ -17,15 +17,32 @@ compared it against wasn't from the scheme the question was actually about. Root
 same as P-004: short, generic claim phrasing doesn't carry enough scheme-specific vocabulary for
 bge-m3 to anchor retrieval correctly, so `top_k=2` per-claim retrieval pulls from elsewhere.
 
-**33 of 66 (50%): correct-scheme evidence, still flagged wrongly.** This is a distinct problem —
-the verifier prompt (`VERDICT_PROMPT`) has no instruction for what to do when the claim itself is
-a statement *about the evidence's completeness* ("context mein X ka ullekh nahi hai," "koi
-jankari nahi hai"). These meta-claims are often true — the source genuinely doesn't mention
-whatever's being asked — but the judge tends to mark them UNVERIFIABLE or even CONTRADICTED
-regardless, apparently because the evidence text doesn't literally "discuss" the meta-claim,
-even when the meta-claim is an accurate description of that same evidence's silence. Example:
-Q6's claim "Context mein naye kisan registration ke liye last date ka ullekh nahi hai" is true —
-no such deadline exists anywhere in the PM-KISAN facts — but was still flagged UNVERIFIABLE.
+**33 of 66 (50%): correct-scheme evidence, still flagged wrongly.** Split further on a systematic
+re-check (not just a handful of examples — see correction in P-006), into two genuinely distinct
+sub-causes:
+
+- **7 of 33: true absence-claim mishandling.** The verifier prompt (`VERDICT_PROMPT`) has no
+  instruction for what to do when the claim itself is a statement *about the evidence's
+  completeness* ("context mein X ka ullekh nahi hai," "koi jankari nahi hai"). These are often
+  true — the source genuinely doesn't mention whatever's being asked — but the judge tends to
+  mark them UNVERIFIABLE or CONTRADICTED regardless. Example: Q6's "Context mein naye kisan
+  registration ke liye last date ka ullekh nahi hai" is true — no such deadline exists anywhere
+  in the PM-KISAN facts — but was still flagged UNVERIFIABLE.
+- **26 of 33 (the majority — 39% of all 66 false positives): decomposition fragments that aren't
+  complete, checkable claims.** `"EWS"`, `"Assam, Meghalaya"`, `"550 rupees per month day scholars
+  ke liye hai"` (with no group specified — the antecedent was in an earlier claim, split off by
+  an "aur"). These aren't meta-claims and they aren't wrong-scheme; they're pieces of a sentence
+  that `decompose()` split too aggressively to still stand alone as a checkable statement. The
+  verifier marking these UNVERIFIABLE is arguably *correct behavior given the input* — there's no
+  complete claim to confirm or deny. This means the headline 0.21 precision understates how the
+  verifier performs on genuinely well-formed claims, and the real lever to pull is decomposition
+  quality (a third failure mode for ADR-003, beyond the two already documented), not the verifier
+  prompt.
+- **One separate, confirmed data-staleness case:** Q9's "Total 6000 rupees... 2000 rupees" claim
+  (factually correct) was marked CONTRADICTED at 0.95 confidence. This verifier run used an index
+  built *before* A fixed the corrupted `Rs.60001`/`Rs.20001` rupee amounts in `PM-KISAN.csv`
+  (P-007) — the judge correctly flagged a true claim against evidence that was, at the time,
+  actually wrong. Not re-measured after the fix; a known small skew in the current numbers.
 
 Full breakdown in P-006 (`docs/problems_and_decisions.md`).
 
@@ -50,17 +67,30 @@ splitting compound sentences. (b) and P-006's wrong-scheme false positives share
 
 ## What this suggests, if there's time to act on it before submission
 
-1. **Highest-value fix:** stop `judge()` from treating "no info" / absence claims the same as
-   ordinary factual claims — either exclude them from verification (flag as a separate
-   "unverifiable by design" category) or give the prompt explicit instructions for this claim
-   type. This alone would likely fix roughly half the false positives (P-006).
-2. **Second:** the wrong-scheme retrieval problem (the other half of false positives, and 2 of 6
-   false negatives) could be fixed for evaluation purposes by filtering retrieval to the
-   question's known scheme, but that's evaluation-only — a deployed system doesn't know the
-   "correct" scheme in advance, so this wouldn't be a legitimate architectural fix, only a way to
-   isolate whether decomposition/verification are sound independent of retrieval quality.
-3. **Lower priority:** the compound-claim and dropped-qualifier decomposition issues (Q10, Q51)
-   affect 3 of 212 claims — real, but a smaller share than the other two.
+Corrected priority order (see P-006's correction — the original "50/50" split undercounted the
+biggest single cause):
+
+1. **Highest-value fix, revised:** tighten `decompose()` so it stops emitting fragments that
+   aren't complete, independently-checkable claims (bare entities like "EWS", clauses that lost
+   their antecedent across an "aur" split). This is 26 of 66 false positives (39%) — the single
+   largest cause found, bigger than either wrong-scheme retrieval or absence-claim handling alone.
+   A cheap first pass: drop any decomposed claim under some minimum token length, or that has no
+   verb, before sending it to verification.
+2. **Second:** stop `judge()` from treating "no info" / absence claims the same as ordinary
+   factual claims — either exclude them from verification or give the prompt explicit
+   instructions for this claim type. Smaller than first thought (7 of 66, not 33), but still a
+   real, distinct, fixable category.
+3. **Third:** the wrong-scheme retrieval problem (33 of 66 false positives, and 2 of 6 false
+   negatives) could be fixed for evaluation purposes by filtering retrieval to the question's
+   known scheme, but that's evaluation-only — a deployed system doesn't know the "correct" scheme
+   in advance, so this isn't a legitimate architectural fix, only a way to isolate whether
+   decomposition/verification are sound independent of retrieval quality.
+4. **Lower priority:** the compound-claim and dropped-qualifier decomposition issues (Q10, Q51)
+   affect 3 of 212 claims — real, but a smaller share than the others.
+5. **Housekeeping, not a design fix:** re-run `scripts/verify_answers.py` against the index built
+   from the post-P-007 corrected `PM-KISAN.csv`, and re-run `compute_metrics.py` — at least one
+   false positive (Q9) is a direct artifact of verifying against stale, corrupted evidence, not a
+   real pipeline weakness.
 
 None of this was implemented — Week 4 ran out of scope for a re-run and re-measurement cycle.
 Recorded as findings for the report and as next steps if the project continues past this
