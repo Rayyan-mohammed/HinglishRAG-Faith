@@ -163,11 +163,15 @@ story rather than duplicated:
 - **P-003** — Groq silently removed the model the entire pipeline depended on mid-project;
   required testing replacement models on both Hinglish fluency and strict-JSON output before
   picking one, not just swapping in whatever worked first.
-- **P-004 / P-006** — short, generic claims (especially ones stating that evidence is silent on
-  something) don't carry enough scheme-specific vocabulary for dense retrieval to reliably anchor
-  to the right scheme, and the verifier prompt has no explicit instruction for judging claims
-  that describe an absence of information. Both are retrieval/verification quality findings, not
-  implementation bugs — detailed in `docs/error_analysis.md`.
+- **P-004 / P-006** — the low precision on flagged claims traces to five distinct causes, found
+  across two rounds of correcting an initial estimate that generalized from too few examples:
+  wrong-scheme retrieval (short, generic claims don't carry enough scheme-specific vocabulary for
+  dense retrieval to anchor correctly), genuine decomposition damage (fragments too incomplete to
+  verify), unexplained failures on claims that were complete, accurate, and correctly-scoped (the
+  most concerning bucket — nothing structural explains these), the verifier mishandling claims
+  that describe an absence of information, and one confirmed stale-data artifact (P-007). All
+  retrieval/decomposition/verification quality findings, not implementation bugs — detailed in
+  `docs/error_analysis.md`.
 - **P-007** — a malformed source PDF silently corrupted two figures in the scraped knowledge base;
   caught by chance during manual testing, which is itself evidence that the scraped-not-authored
   knowledge base needed (and didn't get, beyond one spot-check) systematic verification against
