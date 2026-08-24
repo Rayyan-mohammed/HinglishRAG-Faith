@@ -109,6 +109,8 @@ documents.
 | `verdict` | str | SUPPORTED / CONTRADICTED / UNVERIFIABLE |
 | `confidence` | float | |
 | `evidence_source` | str | which scheme's CSV the top retrieved passage came from |
+| `evidence_sources` | str | comma-joined sources of every `top_k` passage retrieved, not just the top one |
+| `evidence_text` | str | the full evidence text actually sent to `judge()` — added so false positives/negatives can be diagnosed after the fact, not just guessed at (see P-006's second correction) |
 
 ### `eval/claim_ground_truth.csv` — built (B3, see ADR-014), row-aligned with `verifier_results.csv`
 | column | type | notes |

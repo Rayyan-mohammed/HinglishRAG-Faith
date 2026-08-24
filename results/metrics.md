@@ -9,10 +9,10 @@ Computed from `results/verifier_results.csv` (212 claim verdicts) against two gr
 | Metric | Value |
 |---|---|
 | Precision on flagged claims | 0.21 |
-| Recall on hallucinated claims | 0.75 |
-| True positives | 18 |
-| False positives | 66 |
-| False negatives | 6 |
+| Recall on hallucinated claims | 0.71 |
+| True positives | 17 |
+| False positives | 65 |
+| False negatives | 7 |
 
 Of 212 total claims, 24 were ground-truth hallucinated (a false or unsupported individual
 statement), 188 were not.
@@ -33,7 +33,7 @@ number correctly treats as *not* catchable by a claim-level verifier.
 
 ## False alarm rate on correct answers
 
-26 of 42 fully_correct answers had at least one claim flagged (CONTRADICTED or
+24 of 42 fully_correct answers had at least one claim flagged (CONTRADICTED or
 UNVERIFIABLE) despite the answer being ground-truth correct — a false-alarm rate of
-0.62. Not one of the blueprint's named metrics, but relevant to precision: it's
+0.57. Not one of the blueprint's named metrics, but relevant to precision: it's
 the direct source of false positives.

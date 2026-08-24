@@ -93,15 +93,17 @@ docs/           planning docs, decision log, contracts, per-phase notes, error a
 the 18 non-fully_correct answers reaches the plain (unverified) baseline unflagged — the verified
 pipeline's whole value is in the columns below. Ground truth is an AI-drafted first pass, pending
 human review (ADR-012, ADR-014) — read `docs/report_evaluation_and_results.md` before quoting
-these numbers anywhere.
+these numbers anywhere. Numbers below are from the P-008 re-run against the corrected knowledge
+base (see P-007); P-008 also found real run-to-run non-determinism even at `temperature=0`, so
+read these as one sample, not an exactly reproducible fixed measurement.
 
 | Metric | Value |
 |---|---|
-| Recall on hallucinated claims | 0.75 |
+| Recall on hallucinated claims | 0.71 |
 | Precision on flagged claims | 0.21 |
 | Answer-level catch rate (strict) | 0.50 |
 | Answer-level catch rate (loose) | 0.78 |
-| False-alarm rate on correct answers | 0.62 |
+| False-alarm rate on correct answers | 0.57 |
 
 ![Results chart](docs/figures/results_chart.png)
 
@@ -152,13 +154,16 @@ on all 60 answers — 212 claims verified, resumable through a Groq TPM rate lim
 Claim-level ground truth derived (`eval/claim_ground_truth.csv`, ADR-014) since the blueprint's
 answer-level labels can't compute Section 13.2's claim-level metrics directly. Precision/recall
 computed (`results/metrics.md`, see Results above). Error analysis done
-(`docs/error_analysis.md`) — traced the 66 false positives to five causes across two rounds of
+(`docs/error_analysis.md`) — traced the false positives to five causes across two rounds of
 correction (each pass found the previous one had generalized from too small a sample — see
-P-006 in `docs/problems_and_decisions.md`): wrong-scheme retrieval (33), genuine decomposition
-damage/fragments (13), unexplained failures on complete-accurate-correctly-scoped claims (12, the
-most concerning — nothing structural explains these), "no info" claim mishandling (7), and one
-confirmed stale-data artifact (1) — and reviewed all 6 false negatives individually. Evaluation
-methodology and results report sections written
+P-006 in `docs/problems_and_decisions.md`), then added full evidence-text logging and re-ran
+verification against the P-007-corrected knowledge base to actually diagnose the previously-
+"unexplained" cases (P-008): wrong-scheme retrieval (~33), decomposition damage/fragments (~13),
+oversized multi-topic fact rows losing the retrieval race (part of ~12), genuine LLM-judge
+misjudgment on complete correct evidence (the other part of that ~12 — a real reliability limit,
+not a bug), "no info" claim mishandling (~7), plus one now-fixed stale-data artifact — and
+reviewed all 7 false negatives individually. P-008 also found real run-to-run non-determinism
+even at `temperature=0`. Evaluation methodology and results report sections written
 (`docs/report_evaluation_and_results.md`). Results chart generated
 (`docs/figures/results_chart.png`).
 

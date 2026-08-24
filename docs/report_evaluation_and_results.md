@@ -47,44 +47,49 @@ with generation randomness rather than isolating the effect of verification.
 
 ## Results
 
+Numbers below are from the P-008 re-run against the post-P-007 corrected knowledge base, with
+full evidence-text logging added specifically to diagnose the previously-unexplained cases. P-008
+also found real run-to-run non-determinism even at `temperature=0` (a second run on identical
+claim text moved recall by 4 points) — treat these as one representative sample, not an exactly
+reproducible fixed measurement.
+
 | Metric | Value |
 |---|---|
 | Precision on flagged claims | 0.21 |
-| Recall on hallucinated claims | 0.75 |
+| Recall on hallucinated claims | 0.71 |
 | Answer-level catch rate (strict) | 0.50 |
 | Answer-level catch rate (loose) | 0.78 |
-| False-alarm rate on correct answers | 0.62 |
+| False-alarm rate on correct answers | 0.57 |
 
 Full breakdown (TP/FP/FN counts) in `results/metrics.md`.
 
-**Reading these numbers honestly:** recall is the strong number here — the verifier catches 3 of
-every 4 genuine hallucinated claims, and 50% of answers containing a real hallucination have it
-correctly flagged. Precision is weak: only 1 in 5 flagged claims is an actual hallucination. This
-is not a small-sample artifact with an obvious single cause — `docs/error_analysis.md` traces the
-66 false positives to five distinct mechanisms after two rounds of correction (see P-006 in
-`docs/problems_and_decisions.md` — the first pass generalized "absence claims" from a handful of
-examples; the second pass caught that the resulting "everything else" bucket was itself a
-too-fast generalization, and only reading all of it individually surfaced the real breakdown):
-wrong-scheme evidence retrieval (33, 50%, the largest identified-cause bucket); genuine
-decomposition damage — bare fragments and clauses that lost their antecedent when split (13, 20%);
-**unexplained retrieval-or-judge failures on claims that were complete, accurate, and
-correctly-scoped** (12, 18% — the most concerning category, since nothing structural explains
-these); the verifier mishandling claims that describe an *absence* of information (7, 11%); and
-one confirmed artifact of verifying against a since-corrected data error (P-007, 1). The 6 false
-negatives trace to three further distinct causes (bundled claims, true-content-wrong-scheme cases
-the verifier structurally can't judge, and a decomposition qualifier-dropping bug). The "strict"
+**Reading these numbers honestly:** recall is the strong number here — the verifier catches
+roughly 7 of every 10 genuine hallucinated claims, and 50% of answers containing a real
+hallucination have it correctly flagged. Precision is weak: only 1 in 5 flagged claims is an
+actual hallucination. This is not a small-sample artifact with an obvious single cause —
+`docs/error_analysis.md` traces the false positives to five distinct mechanisms, found across two
+rounds of correcting an initial estimate that generalized from too small a sample, followed by a
+targeted investigation (P-006, then P-008) rather than left as a guess: wrong-scheme evidence
+retrieval (the largest identified-cause bucket, roughly half); genuine decomposition damage — bare
+fragments and clauses that lost their antecedent when split (roughly a fifth); **oversized,
+multi-topic fact rows in the knowledge base losing the retrieval race to shorter but wrong facts**
+— a data-granularity problem, confirmed reproducible, not previously known; **genuine LLM-judge
+misjudgment on claims that were complete, accurate, and given the fully correct evidence** — a
+real reliability limit on the LLM-as-judge method itself, not fixable by more engineering; and the
+verifier mishandling claims that describe an *absence* of information (roughly a tenth) — which
+P-008's false-negative re-check also found running in reverse: the judge sometimes *accepts* a
+false "the source is silent on this" claim as readily as it wrongly flags a true one. The "strict"
 vs "loose" catch-rate gap (0.50 vs 0.78) exists because 7 of the 18 flagged answers turned out, on
 claim-by-claim re-check, to have no individually-false claim at all — their problem was relevance
 or completeness, which a claim-level supported/contradicted check cannot catch by construction,
 independent of how well any single component performs.
 
-Because a real share of the 66 false positives are decomposition noise (13, fragments too
-incomplete to be checkable claims) rather than verification failures, the headline 0.21 precision
-understates how the verifier performs on genuinely well-formed claims. But the single highest-
-priority next step isn't a fix at all — it's finding out what's actually wrong in the 12 cases
-where a complete, accurate, correctly-scoped claim still got flagged, since nothing in the pipeline
-explains those and no fix should be designed before that's understood. See
-`docs/error_analysis.md` for the full priority order.
+Because a real share of the false positives are decomposition noise or knowledge-base granularity
+issues rather than verification failures, the headline 0.21 precision understates how the verifier
+performs on genuinely well-formed claims against well-scoped evidence. But not all of the gap is
+fixable — the confirmed LLM-judge misjudgment case means some ceiling on precision is inherent to
+the method, not an engineering shortfall. See `docs/error_analysis.md` for the full,
+priority-ordered breakdown of what's fixable and what isn't.
 
 **Comparison to the plain (unverified) baseline:** every one of the 18 non-fully_correct answers
 would have reached the user completely unflagged under the plain pipeline — the baseline has, by

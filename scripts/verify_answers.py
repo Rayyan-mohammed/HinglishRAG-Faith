@@ -4,7 +4,12 @@ results/verifier_results.csv.
 
 Resumable: re-running skips (question_id, claim) pairs already in the output file, and each
 result is flushed to disk immediately, since Groq's free-tier daily token limit can interrupt a
-full run partway through (see P-001 in docs/problems_and_decisions.md)."""
+full run partway through (see P-001 in docs/problems_and_decisions.md).
+
+Logs the full evidence text (all top_k retrieved passages, not just the top one's source) --
+added after error analysis found 12 false positives with no identifiable cause, only diagnosable
+if the actual evidence the judge saw is available after the fact (see P-006's second correction
+in docs/problems_and_decisions.md)."""
 
 import csv
 import os
@@ -20,7 +25,15 @@ from src.verification import verify_claim
 
 GENERATED_ANSWERS = "results/generated_answers.csv"
 OUTPUT = "results/verifier_results.csv"
-FIELDS = ["question_id", "claim", "verdict", "confidence", "evidence_source"]
+FIELDS = [
+    "question_id",
+    "claim",
+    "verdict",
+    "confidence",
+    "evidence_source",
+    "evidence_sources",
+    "evidence_text",
+]
 
 
 def load_generated_answers():
@@ -58,7 +71,10 @@ def main():
                 if (qid, claim) in done:
                     continue
                 result = verify_claim(claim, index, passages, top_k=2)
-                evidence_source = result["evidence"][0]["source"] if result["evidence"] else ""
+                evidence = result["evidence"]
+                evidence_source = evidence[0]["source"] if evidence else ""
+                evidence_sources = ",".join(p["source"] for p in evidence)
+                evidence_text = "\n---\n".join(f"[{p['source']}] {p['text']}" for p in evidence)
                 writer.writerow(
                     {
                         "question_id": qid,
@@ -66,6 +82,8 @@ def main():
                         "verdict": result.get("verdict", "UNVERIFIABLE"),
                         "confidence": result.get("confidence", 0.0),
                         "evidence_source": evidence_source,
+                        "evidence_sources": evidence_sources,
+                        "evidence_text": evidence_text,
                     }
                 )
                 f.flush()

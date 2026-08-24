@@ -12,10 +12,10 @@ OUTPUT = "docs/figures/results_chart.png"
 
 metrics = {
     "Precision\n(flagged claims)": 0.21,
-    "Recall\n(hallucinated claims)": 0.75,
+    "Recall\n(hallucinated claims)": 0.71,
     "Catch rate\n(strict)": 0.50,
     "Catch rate\n(loose)": 0.78,
-    "False-alarm rate\n(correct answers)": 0.62,
+    "False-alarm rate\n(correct answers)": 0.57,
 }
 
 colors = ["#c0392b", "#27ae60", "#2980b9", "#5dade2", "#e67e22"]

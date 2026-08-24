@@ -13,5 +13,8 @@ labels. Formats are defined in [`../docs/contracts.md`](../docs/contracts.md):
 - computed precision/recall/answer-level catch rate — `metrics.md`, built in B3/B4 by
   `scripts/compute_metrics.py`, using `eval/claim_ground_truth.csv` (claim-level ground truth,
   ADR-014) alongside `eval/labels.csv`
+- `verifier_results.pre-P007.csv.bak` — snapshot of `verifier_results.csv` from before the P-008
+  re-run against the P-007-corrected knowledge base. Kept for reference (it's what P-008's
+  before/after non-determinism comparison used); not the current results, not read by any script.
 
 These are deliverables, not scratch output — commit them once they're produced, don't gitignore.
