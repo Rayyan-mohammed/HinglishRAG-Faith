@@ -119,6 +119,27 @@ specifically got missed or over-flagged is in [`docs/error_analysis.md`](docs/er
 - [`docs/error_analysis.md`](docs/error_analysis.md) — verifier mistakes reviewed in detail (B4)
 - [`docs/slides.md`](docs/slides.md) — presentation slides (A4)
 
+## Project status
+
+**All 24 tasks across both tracks and all 4 weeks are done.** Verified, not assumed: full test
+suite passes (`uv run python -m pytest`, 14 tests), and the complete pipeline was run live
+end-to-end (retrieval → Hinglish generation → decomposition → per-claim verification) as a final
+check — see the week-by-week log below and `docs/problems_and_decisions.md` for what "done"
+actually involved (three memory-constrained index rebuilds, a Groq model deprecation mid-project,
+a corrupted source PDF, non-deterministic verifier outputs, and two rounds of self-correction on
+the error analysis, among other things).
+
+**One item is deliberately not marked done, and isn't something this session can complete:**
+`eval/labels.csv` and `eval/claim_ground_truth.csv` — the ground truth every precision/recall
+number in this project rests on — are an AI-drafted first pass, `reviewed_by_human=FALSE` on
+every row (ADR-012, ADR-014). This was an explicit choice, not an oversight: the blueprint's own
+design (ADR-006) requires ground truth to come from a human specifically *because* the verifier
+being measured is also an LLM — if the ground truth were AI-written too, the precision/recall
+numbers would just measure two LLMs agreeing with each other, not real hallucination-catching
+ability. That review is the one piece of this project that has to happen outside this session.
+The 18 flagged answers (`label != fully_correct` in `eval/labels.csv`) are the highest-value
+subset to check first, since they drive every downstream metric.
+
 ## Status
 
 Week 1 done, both tracks. Track B: 60-question Hinglish evaluation set (`eval/questions.csv`)
