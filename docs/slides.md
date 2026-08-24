@@ -117,20 +117,25 @@ provisional throughout.
 
 ---
 
-## Why precision is weak — three distinct causes
+## Why precision is weak — five causes, found over two rounds of correction
 
 **66 false positives:**
 
 1. **Wrong-scheme evidence (33, 50%)** — short, generic claims don't carry enough scheme-specific
    vocabulary for retrieval to anchor correctly
-2. **Decomposition fragments that aren't real claims (26, 39% — the biggest single cause)** —
-   bare entities ("EWS"), clauses that lost their antecedent when split on "aur" — nothing to
-   verify, so UNVERIFIABLE is arguably the correct call on bad input
-3. **"Absence" claims mishandled (7, 11%)** — the verifier prompt has no instruction for claims
-   that describe evidence being *silent* on something — often true, but still flagged
+2. **Decomposition damage (13, 20%)** — bare fragments ("EWS"), clauses that lost their antecedent
+   when split on "aur" — nothing complete to verify
+3. **Unexplained: complete, accurate, correctly-scoped claims still flagged wrong (12, 18%)** —
+   the concerning one; nothing structural to blame
+4. **"Absence" claims mishandled (7, 11%)** — verifier prompt has no instruction for claims
+   describing evidence being *silent* on something
+5. **Confirmed stale-data artifact (1, 2%)** — verified against a rupee amount later fixed (P-007)
 
-(#2 was found correcting an earlier estimate that assumed #3 explained all of the "correct-scheme,
-still-flagged" cases — it didn't; systematically re-checking all 33 found #2 is 4x bigger.)
+(Found by two rounds of correction, not one: an early estimate lumped #2-#5 together as one
+"absence claims" cause from a handful of examples; correcting that lumped #3+#4 together as one
+"decomposition fragments" cause from a keyword filter, without reading every entry. Only reading
+all 33 individually surfaced the real split — including #3, the most important finding, since it's
+the one bucket nothing else explains.)
 
 **6 false negatives, three separate mechanisms:** bundled claims mixing true facts with
 unverifiable generalizations, true-content-wrong-scheme cases, and a decomposition bug that drops
@@ -140,14 +145,14 @@ an exhaustiveness qualifier ("only X and Y") when splitting on "aur"
 
 ## What we'd fix next
 
-1. **Highest value, revised**: tighten decomposition to drop fragments that aren't complete,
-   checkable claims before they reach verification — biggest single cause (39% of false positives)
-2. Stop treating "absence" claims like ordinary factual claims — smaller than first thought, still
-   real
+1. **Highest priority — investigate, don't fix yet**: find out what's actually wrong in the 12
+   unexplained cases (log full evidence text, not just the source label) before designing anything
+2. Tighten decomposition to drop fragments that aren't complete, checkable claims (20%)
 3. Scheme-filtered retrieval for evaluation isolation (not a legitimate deployed-system fix — a
-   real user's scheme isn't known in advance)
-4. Fix the remaining decomposition edge cases (compound claims, dropped qualifiers)
-5. Re-run verification against the post-P-007 corrected knowledge base — one false positive is a
+   real user's scheme isn't known in advance) — largest identified-cause bucket (50%)
+4. Stop treating "absence" claims like ordinary factual claims (11%)
+5. Fix the remaining decomposition edge cases (compound claims, dropped qualifiers)
+6. Re-run verification against the post-P-007 corrected knowledge base — one false positive is a
    confirmed artifact of stale, corrupted evidence, not a real weakness
 
 None implemented yet — Week 4 ran out of scope for a re-measurement cycle. Recorded as next steps.

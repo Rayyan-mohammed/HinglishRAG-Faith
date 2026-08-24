@@ -17,10 +17,32 @@ compared it against wasn't from the scheme the question was actually about. Root
 same as P-004: short, generic claim phrasing doesn't carry enough scheme-specific vocabulary for
 bge-m3 to anchor retrieval correctly, so `top_k=2` per-claim retrieval pulls from elsewhere.
 
-**33 of 66 (50%): correct-scheme evidence, still flagged wrongly.** Split further on a systematic
-re-check (not just a handful of examples — see correction in P-006), into two genuinely distinct
-sub-causes:
+**33 of 66 (50%): correct-scheme evidence, still flagged wrongly.** First pass at this bucket
+grouped it into "7 absence-claims + 26 decomposition fragments" — the second half was itself a
+too-fast generalization (a keyword filter, not a read of all 26). Reading every one individually
+found four genuinely distinct sub-causes, not two:
 
+- **13 of 33: genuine decomposition damage.** Bare fragments with no predicate (`"EWS"`,
+  `"Assam, Meghalaya"`), a dangling incomplete conditional (Q47's "agar aapke paas pucca ghar hai"
+  cut off before its consequence clause), and list items that lost their shared antecedent when a
+  compound sentence split on "aur" — 4 of Q38's "day scholars" figures got separated from the
+  "Group N ke liye" reference naming which group they belong to (the "hostellers" halves of the
+  same pairs kept their group reference and verified fine — see next bullet). Also Q25's "poora
+  kharcha cover hota hai" claim, the same dropped-qualifier bug already documented for Q51
+  (ADR-003) — split off from its own "lekin sirf 5 lakh tak" cap. The verifier marking these
+  UNVERIFIABLE is arguably correct given the input — there's no complete claim left to check.
+- **12 of 33: unexplained retrieval-or-judge failures on well-formed, accurate, correctly-scoped
+  claims.** The concerning bucket — no decomposition damage, no scheme mismatch, no absence
+  pattern, and still wrong. Concrete example: Q42's "Agar aap SC category se hain toh aapko caste
+  certificate ki copy bhi lagani hogi" — complete sentence, factually correct (matches the
+  source's application document list exactly), evidence correctly scoped to Post-Matric
+  Scholarship — came back **CONTRADICTED at 0.92 confidence**. Also 5 of Q38's "Group N ke liye
+  1200/820/570/380 rupees hostellers" figures, each a complete, specific, true claim naming its
+  own group — not missing anything, still flagged. `verifier_results.csv` only logs the
+  top-ranked evidence source, not the full evidence text sent to the judge, so it isn't possible
+  after the fact to tell whether the judge saw the right passage and misjudged it, or saw a
+  subtly-wrong one despite the scheme label matching — a logging gap worth fixing before the next
+  run.
 - **7 of 33: true absence-claim mishandling.** The verifier prompt (`VERDICT_PROMPT`) has no
   instruction for what to do when the claim itself is a statement *about the evidence's
   completeness* ("context mein X ka ullekh nahi hai," "koi jankari nahi hai"). These are often
@@ -28,21 +50,17 @@ sub-causes:
   mark them UNVERIFIABLE or CONTRADICTED regardless. Example: Q6's "Context mein naye kisan
   registration ke liye last date ka ullekh nahi hai" is true — no such deadline exists anywhere
   in the PM-KISAN facts — but was still flagged UNVERIFIABLE.
-- **26 of 33 (the majority — 39% of all 66 false positives): decomposition fragments that aren't
-  complete, checkable claims.** `"EWS"`, `"Assam, Meghalaya"`, `"550 rupees per month day scholars
-  ke liye hai"` (with no group specified — the antecedent was in an earlier claim, split off by
-  an "aur"). These aren't meta-claims and they aren't wrong-scheme; they're pieces of a sentence
-  that `decompose()` split too aggressively to still stand alone as a checkable statement. The
-  verifier marking these UNVERIFIABLE is arguably *correct behavior given the input* — there's no
-  complete claim to confirm or deny. This means the headline 0.21 precision understates how the
-  verifier performs on genuinely well-formed claims, and the real lever to pull is decomposition
-  quality (a third failure mode for ADR-003, beyond the two already documented), not the verifier
-  prompt.
-- **One separate, confirmed data-staleness case:** Q9's "Total 6000 rupees... 2000 rupees" claim
+- **1 of 33: confirmed data staleness.** Q9's "Total 6000 rupees... 2000 rupees" claim
   (factually correct) was marked CONTRADICTED at 0.95 confidence. This verifier run used an index
   built *before* A fixed the corrupted `Rs.60001`/`Rs.20001` rupee amounts in `PM-KISAN.csv`
   (P-007) — the judge correctly flagged a true claim against evidence that was, at the time,
   actually wrong. Not re-measured after the fix; a known small skew in the current numbers.
+
+So of all 66 false positives: 33 wrong-scheme, 13 decomposition damage, 12 unexplained
+verifier/retrieval failures on good input, 7 absence-claim mishandling, 1 confirmed data
+staleness. The 12 "unexplained" claims matter most for judging how good the underlying verifier
+actually is, since nothing else can be blamed for those — everything else has an identifiable
+cause with a plausible fix.
 
 Full breakdown in P-006 (`docs/problems_and_decisions.md`).
 
@@ -67,27 +85,31 @@ splitting compound sentences. (b) and P-006's wrong-scheme false positives share
 
 ## What this suggests, if there's time to act on it before submission
 
-Corrected priority order (see P-006's correction — the original "50/50" split undercounted the
-biggest single cause):
+Twice-corrected priority order (see P-006's two corrections — each pass found the previous one
+had generalized from too small a sample):
 
-1. **Highest-value fix, revised:** tighten `decompose()` so it stops emitting fragments that
-   aren't complete, independently-checkable claims (bare entities like "EWS", clauses that lost
-   their antecedent across an "aur" split). This is 26 of 66 false positives (39%) — the single
-   largest cause found, bigger than either wrong-scheme retrieval or absence-claim handling alone.
-   A cheap first pass: drop any decomposed claim under some minimum token length, or that has no
-   verb, before sending it to verification.
-2. **Second:** stop `judge()` from treating "no info" / absence claims the same as ordinary
+1. **Highest priority, but not a fix — an investigation:** find out what's actually going wrong
+   in the 12 unexplained cases (18% of all false positives) before designing a fix for them.
+   Nothing else can be blamed for those — correct scheme, complete claim, correct fact, still
+   flagged wrong. Start by logging the *full* evidence text `judge()` receives, not just the top
+   source label, so these can actually be diagnosed instead of guessed at.
+2. **Second:** tighten `decompose()` so it stops emitting fragments that aren't complete,
+   independently-checkable claims (bare entities, clauses that lost their antecedent across an
+   "aur" split). 13 of 66 false positives (20%). A cheap first pass: drop any decomposed claim
+   under some minimum token length, or that has no verb, before sending it to verification.
+3. **Third:** the wrong-scheme retrieval problem (33 of 66 false positives — the single largest
+   *identified-cause* bucket, and 2 of 6 false negatives) could be fixed for evaluation purposes
+   by filtering retrieval to the question's known scheme, but that's evaluation-only — a deployed
+   system doesn't know the "correct" scheme in advance, so this isn't a legitimate architectural
+   fix, only a way to isolate whether decomposition/verification are sound independent of
+   retrieval quality.
+4. **Fourth:** stop `judge()` from treating "no info" / absence claims the same as ordinary
    factual claims — either exclude them from verification or give the prompt explicit
-   instructions for this claim type. Smaller than first thought (7 of 66, not 33), but still a
-   real, distinct, fixable category.
-3. **Third:** the wrong-scheme retrieval problem (33 of 66 false positives, and 2 of 6 false
-   negatives) could be fixed for evaluation purposes by filtering retrieval to the question's
-   known scheme, but that's evaluation-only — a deployed system doesn't know the "correct" scheme
-   in advance, so this isn't a legitimate architectural fix, only a way to isolate whether
-   decomposition/verification are sound independent of retrieval quality.
-4. **Lower priority:** the compound-claim and dropped-qualifier decomposition issues (Q10, Q51)
+   instructions for this claim type. Smallest identified category (7 of 66), but still real and
+   fixable.
+5. **Lower priority:** the compound-claim and dropped-qualifier decomposition issues (Q10, Q51)
    affect 3 of 212 claims — real, but a smaller share than the others.
-5. **Housekeeping, not a design fix:** re-run `scripts/verify_answers.py` against the index built
+6. **Housekeeping, not a design fix:** re-run `scripts/verify_answers.py` against the index built
    from the post-P-007 corrected `PM-KISAN.csv`, and re-run `compute_metrics.py` — at least one
    false positive (Q9) is a direct artifact of verifying against stale, corrupted evidence, not a
    real pipeline weakness.

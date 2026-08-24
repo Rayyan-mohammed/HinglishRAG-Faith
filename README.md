@@ -152,11 +152,13 @@ on all 60 answers — 212 claims verified, resumable through a Groq TPM rate lim
 Claim-level ground truth derived (`eval/claim_ground_truth.csv`, ADR-014) since the blueprint's
 answer-level labels can't compute Section 13.2's claim-level metrics directly. Precision/recall
 computed (`results/metrics.md`, see Results above). Error analysis done
-(`docs/error_analysis.md`) — traced the 66 false positives to three distinct causes: wrong-scheme
-retrieval (33), decomposition producing fragments too incomplete to be checkable claims (26, the
-largest single cause — found correcting an earlier estimate that only checked a handful of
-examples, see P-006's correction), and mishandling of "no info" claims (7) — and reviewed all 6
-false negatives individually. Evaluation methodology and results report sections written
+(`docs/error_analysis.md`) — traced the 66 false positives to five causes across two rounds of
+correction (each pass found the previous one had generalized from too small a sample — see
+P-006 in `docs/problems_and_decisions.md`): wrong-scheme retrieval (33), genuine decomposition
+damage/fragments (13), unexplained failures on complete-accurate-correctly-scoped claims (12, the
+most concerning — nothing structural explains these), "no info" claim mishandling (7), and one
+confirmed stale-data artifact (1) — and reviewed all 6 false negatives individually. Evaluation
+methodology and results report sections written
 (`docs/report_evaluation_and_results.md`). Results chart generated
 (`docs/figures/results_chart.png`).
 
