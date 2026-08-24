@@ -35,8 +35,20 @@ def split_on_connectors(sentence):
     return claims
 
 
+MIN_CLAIM_WORDS = 3
+
+
 def decompose(answer):
     claims = []
     for sentence in split_sentences(answer):
         claims.extend(split_on_connectors(sentence))
-    return [c.strip(" ,.") for c in claims if c.strip(" ,.")]
+    stripped = (c.strip(" ,.") for c in claims)
+    # Drop degenerate fragments (bare entities like "EWS", "Assam, Meghalaya") that
+    # decomposition sometimes produces — they aren't checkable claims at all, and get
+    # verified as if they were, inflating false positives. See P-008's diagnosis in
+    # docs/problems_and_decisions.md. Threshold of 3 is deliberately conservative: it was
+    # checked against real 1-2 word fragments (dropped) and real short claims like "Bank
+    # account details" (3 words, kept) to avoid losing legitimate short claims. It does not
+    # catch every damaged fragment (e.g. a claim that lost its antecedent across an "aur"
+    # split but is still 4+ words) — that's a harder, unsolved case, not this fix's job.
+    return [c for c in stripped if c and len(c.split()) >= MIN_CLAIM_WORDS]

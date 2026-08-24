@@ -2,16 +2,24 @@
 
 from groq import Groq
 
-from config.settings import GENERATOR_MODEL, GROQ_API_KEY
+from config.settings import GENERATOR_MODEL, GROQ_API_KEYS
 
-_client = None
+_clients = None
 
 
 def get_client():
-    global _client
-    if _client is None:
-        _client = Groq(api_key=GROQ_API_KEY)
-    return _client
+    """Returns the first configured client, for callers that only need one."""
+    return get_clients()[0]
+
+
+def get_clients():
+    """Returns one Groq client per configured API key (GROQ_API_KEY, GROQ_API_KEY_2, ...),
+    so a long batch run can fail over to another key's quota instead of waiting out one
+    key's daily limit -- see judge()'s retry loop in src/verification.py."""
+    global _clients
+    if _clients is None:
+        _clients = [Groq(api_key=key) for key in GROQ_API_KEYS]
+    return _clients
 
 
 SYSTEM_PROMPT = """You are a helpful assistant answering questions about Indian government schemes.

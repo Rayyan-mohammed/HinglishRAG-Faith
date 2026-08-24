@@ -8,6 +8,7 @@ changes — it's the source of truth for how A's and B's code plug together.
 | Var | Required | Used by |
 |---|---|---|
 | `GROQ_API_KEY` | yes | `src/generation.py`, `src/verification.py` |
+| `GROQ_API_KEY_2`, `_3`, `_4` | no | Optional extra keys (separate accounts) for automatic failover on a daily-quota rate limit — see `judge()` in `src/verification.py` and P-008 |
 
 ## Passage format
 
