@@ -35,7 +35,6 @@ question_id,claim,true_hallucinated
 12,Mobile number bhi dena hai,False
 12,woh mandatory nahi hai,False
 13,Aadhaar card PM-KISAN ke liye mandatory hai,False
-13,"Assam, Meghalaya",False
 13,Jammu & Kashmir ke kuch cases mein exemption di gayi hai,False
 13,"Jab tak aapke paas Aadhaar card nahi hai, toh aapko doosre documents jaise ki driving license, voter ID card, ya NREGA job card bhi submit karne pad sakte hain",False
 13,"generally, Aadhaar card mandatory hai PM-KISAN ke benefits ke liye",False
@@ -45,7 +44,6 @@ question_id,claim,true_hallucinated
 15,Bank account details verify karne ke liye aapko apna bank account number,False
 15,IFSC code submit karna padta hai,False
 15,"Iske alawa, aapko apna Aadhaar number bhi submit karna padta hai",False
-15,"Assam, Meghalaya",False
 15,Jammu & Kashmir ke liye yeh zaruri nahi hai,False
 15,wahan par Aadhaar number har kisi ke paas nahi hai,False
 16,"Ayushman Bharat card banwane ke liye jo beneficiaries Haryana Mukhyamantri Antyodaya Parivar Utthan Yojana ke under aate hain, unka annual family income 1.80 lakh se kam hona chahiye, toh ve eligible hain",False
@@ -157,7 +155,6 @@ question_id,claim,true_hallucinated
 47,"Nahin, jinke paas already pucca ghar hai wo eligible nahi hain",False
 47,agar aapke paas pucca ghar hai,False
 47,"uska size 21 sqm se kam hai, to aap existing house ko enhance karne ke liye eligible ho sakte hain",False
-48,EWS,False
 48,LIG category ke liye income criteria hai,False
 48,EWS households ke liye annual income upto Rs. 3.00 lakhs hai,False
 48,LIG households ke liye annual income Rs. 3.00 lakhs se Rs. 6.00 lakhs ke beech hai,False

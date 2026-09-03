@@ -57,14 +57,14 @@ Every component is pretrained and reused as-is — no model trained or fine-tune
 
 ## Knowledge base
 
-**172 atomic facts**, scraped live from official `.gov.in` sources — not hand-written
+**183 atomic facts**, scraped live from official `.gov.in` sources — not hand-written
 
 | Scheme | Facts | Sources |
 |---|---|---|
 | PM-KISAN | 43 | Operational Guidelines + Revised FAQ + Additional FAQ (PDFs) |
 | Ayushman Bharat | 37 | Official FAQ + Benefits page |
 | PM Awas Yojana | 58 | FAQ + PMAY-U 2.0 Operational Guidelines (PDF) |
-| Post-Matric Scholarship | 34 | National guidelines PDF + Maharashtra state page |
+| Post-Matric Scholarship | 45 | National guidelines PDF + Maharashtra state page (originally 34 rows — one oversized row later split into 12 atomic facts, ADR-015) |
 
 Re-fetchable and reproducible: `scripts/fetch_scheme_data.py` re-derives every file from its live
 source on demand.
@@ -91,7 +91,7 @@ Runs entirely on free tools — no GPU, no paid API, no institutional compute.
 - **60 hand-written Hinglish questions**, 15 per scheme, 4 categories each (eligibility, deadline,
   amount, documents)
 - **Two-level ground truth**: answer-level (fully correct / partially / fully hallucinated) and
-  claim-level (212 decomposed claims, 24 ground-truth hallucinated)
+  claim-level (209 decomposed claims, 24 ground-truth hallucinated)
 - **Protocol**: build index → generate plain-RAG answers → label ground truth → run full verified
   pipeline → compute precision/recall → review a sample of mistakes
 
@@ -108,14 +108,15 @@ provisional throughout.
 
 ## Reading the results honestly
 
-- **Recall is decent**: catches roughly 7 of every 10 genuine hallucinated claims
-- **Precision is weak**: only 1 in 5 flagged claims is an actual hallucination
+- **Precision is weak**: about 1 in 5-6 flagged claims is an actual hallucination
+- **Recall is the number to watch — it dropped**: 0.71 → 0.42 after our own fixes (next slides
+  explain why, in full)
 - **The baseline has a 0% catch rate by definition** — the plain pipeline would let every one of
   the 18 non-fully-correct answers through completely unflagged
-- Even at today's precision: moving half of hallucinated answers from *silently wrong* to
-  *flagged for review* is the entire point of the project
-- Numbers are one representative sample, not a fixed measurement — re-running on identical claim
-  text at `temperature=0` moved recall by 4 points (found in P-008, see next slide)
+- The answer-level strict catch rate held steady at 0.50 despite the claim-level recall drop —
+  the answers that got caught are still caught, driven by different claims within them
+- Numbers are samples, not fixed measurements — re-running on identical claim text at
+  `temperature=0` still moves individual verdicts run to run
 
 ---
 
@@ -145,31 +146,61 @@ absence-claims at face value
 
 ---
 
-## P-008: re-running the pipeline surfaced two more findings
+## We shipped three fixes. Two worked. One made things worse — on purpose, we found out why
 
-- **Diagnosed the "unexplained" bucket** by adding full evidence-text logging and re-running
-  verification against the corrected knowledge base — turned "no idea why" into two concrete,
-  confirmed causes (previous slide)
-- **Discovered real non-determinism**: re-verifying the exact same 212 claims (same text, nearly
-  identical index) at `temperature=0` still moved recall from 0.75 to 0.71 and flipped 3
-  individual verdicts — a meaningful amount of noise for an evaluation set this size, and a
-  disclosed limitation of any single reported number from an LLM-judge pipeline
+| Fix | Result |
+|---|---|
+| Split the oversized, multi-topic knowledge-base row into 12 atomic facts | ✅ Confirmed: the retrieval misses it targeted are gone |
+| Drop degenerate decomposition fragments before verification | ✅ Confirmed: fragments no longer reach the judge |
+| Add explicit prompt handling for "absence" claims | ⚠️ Correct in isolation, **net-negative on the full pipeline** |
+
+Before → after: **precision 0.21 → 0.18, recall 0.71 → 0.42.**
 
 ---
 
-## What we'd fix next
+## Why the third fix backfired
 
-1. **Highest value**: split the oversized, multi-topic knowledge-base rows into one row per
-   sub-fact — a data-quality fix, confirmed to directly cause several of the worst retrieval misses
-2. Tighten decomposition to drop fragments that aren't complete, checkable claims
-3. Scheme-filtered retrieval for evaluation isolation (not a legitimate deployed-system fix — a
-   real user's scheme isn't known in advance) — largest identified-cause bucket
-4. Fix absence-claim handling in both directions, not just over-flagging
-5. Accept the genuine LLM-judge misjudgment cases as a disclosed method limitation, not a bug to
-   chase
-6. Fix the remaining decomposition edge cases (compound claims, dropped qualifiers)
+The absence-claim fix tells the judge: *"if the evidence doesn't discuss this, an 'it's not
+mentioned' claim is accurate — say SUPPORTED."* Verified correct with hand-written test cases
+before shipping.
 
-None implemented yet — Week 4 ran out of scope for a re-measurement cycle. Recorded as next steps.
+The problem: wrong-scheme retrieval was **deliberately left unfixed** (a real user's question
+isn't pre-labeled with its scheme). When retrieval pulls evidence from the wrong scheme, that
+evidence genuinely doesn't discuss the claim's real topic — so the new instruction tells the judge
+to trust that absence. **9 of 14 new false negatives (64%) have wrong-scheme evidence.**
+
+Before the fix, bad evidence more often produced a hedge (UNVERIFIABLE — still counted as
+flagged). After the fix, the same bad evidence produces confident SUPPORTED. The fix made the
+judge more decisive; decisiveness on bad evidence is worse than a hedge.
+
+**We tried to measure the isolated effect** with an eval-only, scheme-filtered retrieval
+diagnostic (never wired into the real pipeline) — it got 53 of 209 claims through before hitting
+a persistent Windows security policy blocking native library DLLs, unrelated to the logic.
+Deprioritized rather than fought further.
+
+---
+
+## The honest call we're leaving open
+
+Reverting the prompt fix would erase the regression — but also erase its real, verified benefit,
+and wouldn't fix the actual problem (wrong-scheme retrieval), just hide it behind a less decisive
+judge again.
+
+**Kept as-is, disclosed plainly**, because the real prerequisite — scoping retrieval correctly —
+is identified but not completed. This is the project's one open, unresolved finding: a
+locally-correct fix with a measured negative system effect, understood well enough to explain
+exactly why, not well enough to call fixed.
+
+---
+
+## Everything else that's still true
+
+- **Genuine LLM-judge misjudgment**: Q42's caste-certificate claim — correct evidence, wrong
+  verdict anyway. A real reliability limit on the method, not an engineering bug.
+- **Non-determinism**: re-verifying identical claim text at `temperature=0` still moves individual
+  verdicts run to run — any single reported number is a sample, not a fixed measurement.
+- **Wrong-scheme retrieval** remains the single largest identified cause of false positives
+  (~50%) and, now, a driver of false negatives too — the real next step for this project.
 
 ---
 
@@ -193,7 +224,10 @@ verification against its sources, not just internal consistency.
 - 60-question set — indicative for a course project, not a statistically powered benchmark
 - Generator and verifier share one model — self-verification bias never separately measured
 - Rule-based decomposition has known, documented failure modes on compound sentences
-- Retrieval and verification quality are entangled in these numbers, not cleanly isolated
+- Retrieval and verification quality are entangled — confirmed concretely: a verifier fix that's
+  correct in isolation regressed recall because retrieval quality wasn't fixed alongside it
+- The absence-claim prompt fix ships with a known, measured recall regression (0.71→0.42), kept
+  rather than reverted because reverting hides the real problem instead of fixing it
 
 ---
 

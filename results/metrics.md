@@ -1,28 +1,28 @@
 # Verification Layer Results
 
-Computed from `results/verifier_results.csv` (212 claim verdicts) against two ground truths:
-`eval/claim_ground_truth.csv` (claim-level, derived per ADR-014) and `eval/labels.csv`
+Computed from `results/verifier_results.csv` (209 claim verdicts) against two ground
+truths: `eval/claim_ground_truth.csv` (claim-level, derived per ADR-014) and `eval/labels.csv`
 (answer-level, ADR-012 — both are AI-drafted, pending human review).
 
 ## Claim-level precision/recall (Section 13.2, metrics 1-2)
 
 | Metric | Value |
 |---|---|
-| Precision on flagged claims | 0.21 |
-| Recall on hallucinated claims | 0.71 |
-| True positives | 17 |
-| False positives | 65 |
-| False negatives | 7 |
+| Precision on flagged claims | 0.18 |
+| Recall on hallucinated claims | 0.42 |
+| True positives | 10 |
+| False positives | 46 |
+| False negatives | 14 |
 
-Of 212 total claims, 24 were ground-truth hallucinated (a false or unsupported individual
-statement), 188 were not.
+Of 209 total claims, 24 were ground-truth hallucinated (a false or
+unsupported individual statement), 185 were not.
 
 ## Answer-level catch rate (Section 13.2, metric 3)
 
 | Definition | Value |
 |---|---|
 | Strict — verifier flagged a claim that IS a true hallucination | 0.50 |
-| Loose — verifier flagged *any* claim in the answer, correct or not | 0.78 |
+| Loose — verifier flagged *any* claim in the answer, correct or not | 0.72 |
 
 18 of 60 answers are ground-truth not-fully-correct (partially or fully hallucinated, per
 `eval/labels.csv`). The gap between strict and loose above matters: loose counts an answer as
@@ -33,7 +33,7 @@ number correctly treats as *not* catchable by a claim-level verifier.
 
 ## False alarm rate on correct answers
 
-24 of 42 fully_correct answers had at least one claim flagged (CONTRADICTED or
+22 of 42 fully_correct answers had at least one claim flagged (CONTRADICTED or
 UNVERIFIABLE) despite the answer being ground-truth correct — a false-alarm rate of
-0.57. Not one of the blueprint's named metrics, but relevant to precision: it's
+0.52. Not one of the blueprint's named metrics, but relevant to precision: it's
 the direct source of false positives.

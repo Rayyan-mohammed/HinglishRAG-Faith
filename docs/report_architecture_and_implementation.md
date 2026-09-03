@@ -46,7 +46,8 @@ reordered during implementation.
 ### Knowledge base (`data/schemes/*.csv`)
 
 One CSV per scheme (PM-KISAN, Ayushman Bharat, PM Awas Yojana, Post-Matric Scholarship — ADR-009),
-172 atomic facts total, each row one `category`/`fact`/`source_url`. Built by
+183 atomic facts total (originally 172 — one oversized, multi-topic row later split into 12
+atomic facts, ADR-015), each row one `category`/`fact`/`source_url`. Built by
 `scripts/fetch_scheme_data.py`, which fetches each scheme's real official `.gov.in` source (PDF
 guidelines, FAQ pages) live over HTTP and parses it with one of five pattern-matching heuristics —
 `faq` (numbered Q&A), `sections` (lettered/roman-numeral clause headers), `clauses` (decimal
@@ -65,7 +66,7 @@ by the 60-question evaluation set, which is itself worth disclosing as a limitat
 
 `BAAI/bge-m3` (pretrained, multilingual, run locally, no fine-tuning — ADR-002) embeds every fact
 and every query into one shared vector space; a FAISS `IndexFlatIP` over normalized embeddings
-does brute-force cosine similarity (ADR-004 — appropriate at 172 facts, would need revisiting at
+does brute-force cosine similarity (ADR-004 — appropriate at 183 facts, would need revisiting at
 real scale). Because facts are already atomic (one row = one short statement), each row is
 embedded directly with no chunking step.
 
@@ -101,7 +102,7 @@ default), and the LLM-judge (`judge()`) is prompted to return strict JSON —
 `{"verdict": ..., "confidence": ...}` — for the claim against its retrieved evidence text, at
 temperature 0 for determinism. `judge()` and `verify_claim()` were split apart early (ADR-010) so
 the verifier prompt could be tested on 5 hand-written claim/evidence pairs before any retrieval
-index existed. Running this at full scale (212 claims across 60 answers) needed two kinds of
+index existed. Running this at full scale (~210 claims across 60 answers) needed two kinds of
 resilience neither showed up in small-scale testing: retrying through Groq's short-burst
 tokens-per-minute limit with exponential backoff, and separately, making every batch-driving
 script resumable to survive Groq's much longer daily-quota limit, since both were hit repeatedly
@@ -137,7 +138,7 @@ live-reload workflow to protect anyway.
 | Language | Python | Matches blueprint Section 15 |
 | Generator + verifier | Groq API, `openai/gpt-oss-120b` | Free tier, fast, no GPU; swapped from `llama-3.3-70b-versatile` after Groq removed it (P-003) |
 | Embeddings | `BAAI/bge-m3`, local | Free, pretrained, handles Hindi-English mixed text without fine-tuning |
-| Vector store | FAISS (`faiss-cpu`), local, in-memory | No server needed at 172-fact scale |
+| Vector store | FAISS (`faiss-cpu`), local, in-memory | No server needed at 183-fact scale |
 | Claim decomposition | Rule-based Python | Transparent, debuggable, sufficient at this scope |
 | Demo | Streamlit | Fastest framework to wire to the existing pipeline function |
 | Dependency management | `uv` + `pyproject.toml` | Reproducible lockfile, single tool for venv + deps + running scripts |
@@ -177,6 +178,17 @@ story rather than duplicated:
   (P-007). P-008 also found real run-to-run non-determinism in the verifier even at
   `temperature=0`. All retrieval/decomposition/verification quality findings, not implementation
   bugs — detailed in `docs/error_analysis.md`.
+- **ADR-015 / ADR-017** — implemented fixes for three of P-008's diagnosed causes (knowledge-base
+  row split, decomposition fragment filter, absence-claim prompt handling) and measured the
+  result end-to-end rather than assuming the fixes worked: precision 0.21→0.18, recall
+  **0.71→0.42**. The knowledge-base split and fragment filter worked as designed; the
+  absence-claim prompt, verified correct in isolation, regressed recall because it interacts with
+  wrong-scheme retrieval (deliberately left unfixed — real deployment can't know a question's
+  scheme in advance). Shipped and disclosed as-is rather than reverted, since reverting would hide
+  the retrieval problem behind a less decisive judge rather than fix it. An eval-only
+  scheme-filtered retrieval diagnostic (`scripts/diagnostic_scheme_filtered_verify.py`) was built
+  to isolate the effect but didn't finish, blocked by a persistent Windows Application Control
+  policy on native DLLs (`faiss`, then `pandas`) — an environment problem, not a code one.
 - **P-007** — a malformed source PDF silently corrupted two figures in the scraped knowledge base;
   caught by chance during manual testing, which is itself evidence that the scraped-not-authored
   knowledge base needed (and didn't get, beyond one spot-check) systematic verification against

@@ -67,10 +67,14 @@ def main():
     correct_answers = [a for a in answers if not a["has_hallucination"]]
     false_alarms = sum(1 for a in correct_answers if a["any_flag_raised"])
 
+    n_total = len(verdicts)
+    n_hallucinated = sum(true_flags)
+    n_not = n_total - n_hallucinated
+
     report = f"""# Verification Layer Results
 
-Computed from `results/verifier_results.csv` (212 claim verdicts) against two ground truths:
-`eval/claim_ground_truth.csv` (claim-level, derived per ADR-014) and `eval/labels.csv`
+Computed from `results/verifier_results.csv` ({n_total} claim verdicts) against two ground
+truths: `eval/claim_ground_truth.csv` (claim-level, derived per ADR-014) and `eval/labels.csv`
 (answer-level, ADR-012 — both are AI-drafted, pending human review).
 
 ## Claim-level precision/recall (Section 13.2, metrics 1-2)
@@ -83,8 +87,8 @@ Computed from `results/verifier_results.csv` (212 claim verdicts) against two gr
 | False positives | {claim_metrics['fp']} |
 | False negatives | {claim_metrics['fn']} |
 
-Of 212 total claims, 24 were ground-truth hallucinated (a false or unsupported individual
-statement), 188 were not.
+Of {n_total} total claims, {n_hallucinated} were ground-truth hallucinated (a false or
+unsupported individual statement), {n_not} were not.
 
 ## Answer-level catch rate (Section 13.2, metric 3)
 

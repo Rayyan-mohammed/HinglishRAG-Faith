@@ -1,20 +1,72 @@
 # Error Analysis (B4, Week 4)
 
 Reviews the verifier's mistakes against `eval/claim_ground_truth.csv`, computed by
-`scripts/compute_metrics.py` into `results/metrics.md`. Current numbers (from the P-008 re-run
-against the post-P-007 corrected data): precision 0.21, recall 0.71, strict answer-level catch
-rate 0.50 — see `results/metrics.md` for the full table.
+`scripts/compute_metrics.py` into `results/metrics.md`. **Current, final, reported numbers**
+(after ADR-015's fixes were implemented and measured — see ADR-017): precision 0.18, recall
+0.42, strict answer-level catch rate 0.50, false-alarm rate 0.52.
 
-**Read the exact counts below as illustrative of the shape of the problem, not as fixed,
-reproducible figures.** P-008 found real run-to-run non-determinism even at `temperature=0` — a
-second run on identical claim text moved recall from 0.75 to 0.71 and flipped 3 individual
-verdicts on true-hallucinated claims. The specific claims making up any bucket below can shift
-between runs; the two root causes P-008 diagnosed (oversized multi-topic fact rows losing the
-retrieval race, and genuine LLM-judge misjudgment on correct evidence) are the stable finding,
-confirmed reproducible across both runs on the same example claims.
+**Read this document in two layers.** Everything below the next section was written *before*
+ADR-015's fixes (decomposition fragment filter, absence-claim prompt, data-granularity split)
+were implemented, diagnosing precision 0.21 / recall 0.71 against 65-66 false positives. That
+diagnosis is kept because it's still an accurate description of *why* those specific problems
+happened, and two of the three fixes it recommended worked exactly as predicted. Read
+**ADR-017's summary right below** first, since it's the number that actually matters: fixing the
+absence-claim handling made the pipeline's *measured* performance worse, not better, because of
+an interaction with wrong-scheme retrieval that wasn't caught before shipping.
+
+## What actually happened after the fixes (ADR-015 → ADR-017)
+
+Three fixes went in: (1) decomposition fragment filter, (2) an explicit verifier-prompt
+instruction for claims that describe an absence of information, (3) splitting Post-Matric
+Scholarship's oversized "V. Value of Scholarship" row into 12 atomic facts. Full re-verification
+(209 claims, same 60 answers) measured:
+
+| Metric | Before (P-008) | After (ADR-015 fixes) |
+|---|---|---|
+| Precision | 0.21 | 0.18 |
+| Recall | 0.71 | **0.42** |
+| True positives | 17 | 10 |
+| False positives | 65 | 46 |
+| False negatives | 7 | 14 |
+| False-alarm rate | 0.57 | 0.52 |
+
+Precision and false-alarm rate moved in the right direction, modestly. **Recall dropped by 29
+points** — the headline result of this whole exercise, and not the one that was expected.
+
+**Why:** fix (2) was verified correct in isolation before shipping — a direct `judge()` call with
+hand-written correct evidence confirmed a true "no info" claim flips UNVERIFIABLE→SUPPORTED and a
+false one flips SUPPORTED→CONTRADICTED, exactly as designed. But 9 of the 14 new false negatives
+(64%) have wrong-scheme evidence — the same P-004/P-006 retrieval problem, deliberately left
+unfixed since scheme-filtering isn't representative of real deployment. When retrieval feeds the
+judge evidence from the wrong scheme, that evidence genuinely doesn't discuss the claim's real
+topic, and the new prompt instruction tells the judge to trust that absence — confidently
+producing SUPPORTED for a false claim, where before the same bad evidence more often produced a
+hedged UNVERIFIABLE (which still counted as "flagged"). The fix made the judge more decisive; on
+bad evidence, decisiveness is worse than a hedge.
+
+An eval-only diagnostic (`scripts/diagnostic_scheme_filtered_verify.py`, retrieval scoped to the
+question's known-correct scheme, never wired into the real pipeline) was built specifically to
+measure how much recall recovers once retrieval isn't the confound — it got 53 of 209 claims
+through before hitting a persistent Windows Application Control policy blocking native DLLs
+(`faiss`, then `pandas` on retry), an environment problem unrelated to the logic. Deprioritized
+rather than fought further — see ADR-017 for the full account.
+
+**Net assessment:** the reported numbers above are real, final, and disclosed as-is, regression
+included. Two of three fixes worked; the third is a documented example of a locally-correct
+change with a negative system-level effect, left in place rather than reverted, because the
+alternative (reverting it) doesn't fix the underlying retrieval problem either — it just goes
+back to hiding it behind a less decisive judge. Whoever continues this project should treat
+"scope retrieval correctly" as the actual prerequisite for the absence-claim fix to pay off, not
+a nice-to-have.
+
+---
+
+## Diagnosis written before the fixes (P-006/P-008) — kept for the reasoning, not the headline numbers
 
 Both ground-truth files (`eval/labels.csv`, `eval/claim_ground_truth.csv`) are AI-drafted,
-pending human review (ADR-012, ADR-014). Everything below is provisional in the same way.
+pending human review (ADR-012, ADR-014). Everything below is provisional in the same way, and the
+specific counts reflect the *pre-fix* run (precision 0.21, recall 0.71) — see the table above for
+what's actually being reported.
 
 ## False positives (65 of 82 flagged claims) — why precision is low
 
@@ -110,41 +162,38 @@ positives, confirming that absence claims are unreliable for the verifier in *bo
 not just as over-flagged. (b) and P-006's wrong-scheme false positives share a root cause; (c) is
 a decomposition failure mode documented in ADR-003's update.
 
-## What this suggests, if there's time to act on it before submission
+## What was actually done, and what's genuinely still open (post ADR-015/017)
 
-Final priority order, after two corrections and one completed investigation (P-008):
+Of the list this section used to propose, three items got implemented and measured, one was
+attempted and blocked by environment issues, and one remains open as the real next step:
 
-1. **Highest value: fix the fact-granularity problem.** Split the oversized, multi-topic rows in
-   `data/schemes/*.csv` (Post-Matric Scholarship's "V. Value of Scholarship" row is the worst
-   offender — one row covering book banks, CPL courses, disability allowances, and the Group I-IV
-   table all at once) into one row per sub-fact, matching the grain everything else in the dataset
-   already uses. This is a data-quality fix, not a code fix, and it's the confirmed cause of
-   several of the worst retrieval misses found in P-008.
-2. **Second: tighten `decompose()`** so it stops emitting fragments that aren't complete,
-   independently-checkable claims (bare entities, clauses that lost their antecedent across an
-   "aur" split). ~13 of 65 false positives (~20%). A cheap first pass: drop any decomposed claim
-   under some minimum token length, or that has no verb, before sending it to verification.
-3. **Third: the wrong-scheme retrieval problem** (the single largest *identified-cause* bucket,
-   ~33 of 65 false positives, and 2 of 7 false negatives) could be fixed for evaluation purposes
-   by filtering retrieval to the question's known scheme, but that's evaluation-only — a deployed
-   system doesn't know the "correct" scheme in advance, so this isn't a legitimate architectural
-   fix, only a way to isolate whether decomposition/verification are sound independent of
-   retrieval quality.
-4. **Fourth: fix absence-claim handling in both directions**, not just the over-flagging half —
-   P-008's false-negative re-check found the judge also *accepts* false "the source is silent on
-   this" claims at face value (Q2, Q43) as readily as it wrongly flags true ones. Either exclude
-   absence-style claims from verification entirely, or give the prompt explicit instructions for
-   this claim type specifically.
-5. **Fifth, and not really fixable by more engineering:** the genuine LLM-judge misjudgment found
-   in P-008 (Q42's caste-certificate claim, correct evidence, wrong verdict anyway) is a real
-   reliability ceiling on the LLM-as-judge approach (ADR-001). Worth disclosing plainly in the
-   final report as a limitation of the method, not chasing as a bug.
-6. **Lower priority:** the compound-claim and dropped-qualifier decomposition issues (Q10, Q51)
-   affect a handful of claims — real, but a smaller share than the others.
-7. **Already done (P-008):** re-ran `scripts/verify_answers.py` against the index built from the
-   post-P-007 corrected `PM-KISAN.csv`. Confirmed the fix worked (Q9 now SUPPORTED) but also
-   surfaced real run-to-run non-determinism as a separate finding — see P-008.
+1. **Done — fact-granularity fix.** Post-Matric Scholarship's oversized row split into 12 atomic
+   facts (`scripts/split_oversized_row.py`). Confirmed working: Q38/Q39's Group I-IV claims now
+   retrieve the correct national table, not the Maharashtra-specific rate range.
+2. **Done — decomposition fragment filter.** `decompose()` now drops sub-3-word fragments
+   (`src/decomposition.py`, `MIN_CLAIM_WORDS`). Confirmed via new tests
+   (`tests/test_decomposition.py`).
+3. **Done, but with a measured regression — absence-claim prompt fix.** Works correctly in
+   isolation; net negative on the full pipeline because retrieval (item 4, below) still feeds it
+   wrong-scheme evidence in 64% of the new false-negative cases. See ADR-017 for the full
+   mechanism. **This is the one open question for whoever continues this project**: revert it,
+   keep it and prioritize fixing retrieval, or make the prompt aware of retrieval confidence
+   before trusting an absence claim.
+4. **Still open — wrong-scheme retrieval.** The single largest identified cause of false
+   positives (~50%) and now, via the interaction above, a driver of false negatives too. An
+   eval-only scheme-filtered diagnostic was built to measure the isolated effect
+   (`scripts/diagnostic_scheme_filtered_verify.py`) but didn't finish — blocked by a persistent
+   Windows Application Control policy blocking native DLLs, an environment problem, not a logic
+   one. Genuinely fixing this for real deployment (not just the eval-only filter) would mean
+   better retrieval — larger `top_k`, reranking, or a stronger embedding model for short queries
+   — not something attempted here.
+5. **Not fixable by more engineering — the genuine LLM-judge misjudgment.** Q42's caste-certificate
+   claim: correct evidence, wrong verdict anyway. A real reliability ceiling on the LLM-as-judge
+   approach (ADR-001), disclosed as a limitation of the method in the final report, not chased as
+   a bug.
+6. **Lower priority, not attempted:** the compound-claim and dropped-qualifier decomposition
+   issues (Q10, Q51) affect a handful of claims — real, but smaller than the others.
 
-None of this was implemented — Week 4 ran out of scope for a re-run and re-measurement cycle.
-Recorded as findings for the report and as next steps if the project continues past this
-submission.
+The honest summary: three fixes shipped, two clearly net-positive, one net-negative for a
+well-understood and disclosed reason, with the real prerequisite for fixing it (retrieval
+quality) identified but not completed this pass.
