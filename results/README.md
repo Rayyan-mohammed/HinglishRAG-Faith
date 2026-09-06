@@ -16,5 +16,15 @@ labels. Formats are defined in [`../docs/contracts.md`](../docs/contracts.md):
 - `verifier_results.pre-P007.csv.bak` — snapshot of `verifier_results.csv` from before the P-008
   re-run against the P-007-corrected knowledge base. Kept for reference (it's what P-008's
   before/after non-determinism comparison used); not the current results, not read by any script.
+- `verifier_results.pre-fixes.csv.bak` — snapshot from before ADR-015's fixes (decomposition
+  filter, data split, first version of the absence-claim prompt). What ADR-017's regression
+  comparison used.
+- `verifier_results.pre-relevance-fix.csv.bak` — snapshot from after ADR-015 but before ADR-018's
+  relevance-check repair, i.e. the regressed state itself (precision 0.18, recall 0.42). What
+  ADR-018's before/after comparison used.
+
+None of the `.bak` snapshots are the current results or read by any script — they're kept purely
+so the before/after numbers quoted in `docs/problems_and_decisions.md` are reproducible from the
+repo, not just asserted in prose.
 
 These are deliverables, not scratch output — commit them once they're produced, don't gitignore.
