@@ -38,7 +38,7 @@ Returned by retrieval, consumed by generation and verification.
    "confidence": float,        # 0.0-1.0
    "claim": str}
   ```
-- `verify_claim(claim: str, index, passages, top_k=2) -> dict` — retrieves evidence, then calls `judge()`. Same shape as above plus `"evidence": list[passage]`.
+- `verify_claim(claim: str, index, passages, top_k=2, n_samples=3) -> dict` — retrieves evidence, then calls `judge()` `n_samples` times independently and returns the majority verdict (confidence averaged over the agreeing samples; a full split with no majority falls back to UNVERIFIABLE). Same shape as above plus `"evidence": list[passage]`. Added in ADR-020 after confirming `judge()` isn't fully deterministic even at `temperature=0`.
 
 ### `src/pipeline.py`
 - `answer_question(question: str, index, passages, verify=True) -> dict`

@@ -2,6 +2,7 @@
 
 import json
 import time
+from collections import Counter
 
 from groq import RateLimitError
 
@@ -94,10 +95,30 @@ def judge(claim, evidence_text, max_retries=5):
     return result
 
 
-def verify_claim(claim, index, passages, top_k=2):
+def verify_claim(claim, index, passages, top_k=2, n_samples=3):
+    """Retrieves evidence, then judges the claim against it by majority vote over
+    n_samples independent judge() calls.
+
+    Added after ADR-019 found the judge is not fully deterministic even at temperature=0:
+    re-running the full pipeline with byte-identical evidence text still flipped some verdicts
+    (Groq's hosted MoE model likely has batching effects). Majority voting trades n_samples-x
+    API cost for a verdict that doesn't depend on a single unlucky sample. On a full split
+    (no verdict wins more than half the votes), falls back to UNVERIFIABLE as the conservative
+    default rather than picking arbitrarily."""
     evidence_passages = retrieve(claim, index, passages, top_k=top_k)
     evidence_text = "\n\n".join(p["text"] for p in evidence_passages)
 
-    result = judge(claim, evidence_text)
-    result["evidence"] = evidence_passages
+    samples = [judge(claim, evidence_text) for _ in range(n_samples)]
+    votes = Counter(s["verdict"] for s in samples)
+    winning_verdict, winning_count = votes.most_common(1)[0]
+    if winning_count * 2 <= n_samples:
+        winning_verdict = "UNVERIFIABLE"
+    agreeing = [s for s in samples if s["verdict"] == winning_verdict]
+
+    result = {
+        "claim": claim,
+        "verdict": winning_verdict,
+        "confidence": sum(s["confidence"] for s in agreeing) / len(agreeing) if agreeing else 0.0,
+        "evidence": evidence_passages,
+    }
     return result

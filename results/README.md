@@ -27,4 +27,16 @@ None of the `.bak` snapshots are the current results or read by any script — t
 so the before/after numbers quoted in `docs/problems_and_decisions.md` are reproducible from the
 repo, not just asserted in prose.
 
+- `verifier_results.pre-adr019.csv.bak` — the complete, single-sample ADR-018 baseline (209 rows,
+  precision 0.24/recall 0.67), kept from before ADR-019's data split and ADR-020's majority-vote
+  judging. What ADR-019's before/after comparison used.
+
+**Current state of `verifier_results.csv` (see ADR-020): partial, in progress.** It holds 116 of
+209 claims, all judged with ADR-020's `n_samples=3` majority vote against the post-ADR-019 index
+(197 facts) — internally consistent (no mixing of majority-vote and single-sample rows), just
+incomplete. Paused after all 3 configured Groq keys hit their daily token quota; resume by
+re-running `scripts/verify_answers.py` (it skips the 116 already-done rows) once quota resets.
+`results/metrics.md` and every doc citing headline numbers still report the last *complete*
+measurement (ADR-018's), not anything computed from this partial file.
+
 These are deliverables, not scratch output — commit them once they're produced, don't gitignore.

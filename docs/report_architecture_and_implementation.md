@@ -100,13 +100,20 @@ connector case already had one, which is why it wasn't touched.
 Each claim is re-embedded and re-queried against the same index (`verify_claim()`, `top_k=2` by
 default), and the LLM-judge (`judge()`) is prompted to return strict JSON —
 `{"verdict": ..., "confidence": ...}` — for the claim against its retrieved evidence text, at
-temperature 0 for determinism. `judge()` and `verify_claim()` were split apart early (ADR-010) so
-the verifier prompt could be tested on 5 hand-written claim/evidence pairs before any retrieval
-index existed. Running this at full scale (~210 claims across 60 answers) needed two kinds of
-resilience neither showed up in small-scale testing: retrying through Groq's short-burst
-tokens-per-minute limit with exponential backoff, and separately, making every batch-driving
-script resumable to survive Groq's much longer daily-quota limit, since both were hit repeatedly
-across Weeks 2–4 (P-001, P-005).
+temperature 0. `temperature=0` does not actually make the judge deterministic in practice —
+P-008 first noticed run-to-run verdict drift on identical input, and ADR-019 confirmed it directly
+(byte-identical evidence text produced a different verdict on 12 of 20 changed claims across two
+runs). `verify_claim()` now judges each claim `n_samples=3` times and takes the majority verdict
+(ADR-020), falling back to UNVERIFIABLE on a full 3-way split, to reduce how much a single unlucky
+sample can move the measured result. `judge()` and `verify_claim()` were split apart early
+(ADR-010) so the verifier prompt could be tested on 5 hand-written claim/evidence pairs before any
+retrieval index existed — `judge()` itself is still the single-call primitive used for that kind of
+direct prompt testing; only `verify_claim()` does the majority-vote sampling. Running this at full
+scale (~210 claims across 60 answers) needed two kinds of resilience neither showed up in
+small-scale testing: retrying through Groq's short-burst tokens-per-minute limit with exponential
+backoff, and separately, making every batch-driving script resumable to survive Groq's much longer
+daily-quota limit, since both were hit repeatedly across Weeks 2–4 (P-001, P-005) — and again after
+majority voting tripled per-claim API cost (ADR-020).
 
 ### Aggregation (`src/pipeline.py`)
 
