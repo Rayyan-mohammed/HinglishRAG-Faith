@@ -95,21 +95,23 @@ pipeline's whole value is in the columns below. Ground truth is an AI-drafted fi
 human review (ADR-012, ADR-014) — read `docs/report_evaluation_and_results.md` before quoting
 these numbers anywhere.
 
-These are the numbers **after** three fixes went in for known precision problems (ADR-015):
-splitting an oversized knowledge-base row, filtering out degenerate decomposition fragments, and
-adding explicit verifier-prompt handling for claims that describe an absence of information. Two
-fixes worked as intended; the third — verified correct in isolation — measurably **regressed
-recall (0.71→0.42)** once retrieval (deliberately left unfixed) fed it wrong-scheme evidence.
-Kept rather than reverted, and disclosed plainly — see ADR-017 for the full mechanism and why
-reverting wouldn't actually fix anything.
+These are the numbers **after four fixes across two rounds** (ADR-015, then ADR-018): splitting
+an oversized knowledge-base row, filtering out degenerate decomposition fragments, and adding
+explicit verifier-prompt handling for claims that describe an absence of information — which
+initially, verified correct in isolation, still **regressed recall (0.71→0.42)** once retrieval
+(deliberately left unfixed — a real question isn't pre-labeled with its scheme) fed it
+wrong-scheme evidence (ADR-017). Rather than reverting, the same instruction was repaired to
+check topical relevance before trusting an absence reading (ADR-018), verified against the real
+failing case first. Net result: **better than the original on precision, false positives, and
+false-alarm rate**, with recall recovered to within 4 points of where the project started.
 
 | Metric | Value |
 |---|---|
-| Recall on hallucinated claims | 0.42 |
-| Precision on flagged claims | 0.18 |
+| Recall on hallucinated claims | 0.67 |
+| Precision on flagged claims | 0.24 |
 | Answer-level catch rate (strict) | 0.50 |
-| Answer-level catch rate (loose) | 0.72 |
-| False-alarm rate on correct answers | 0.52 |
+| Answer-level catch rate (loose) | 0.78 |
+| False-alarm rate on correct answers | 0.50 |
 
 ![Results chart](docs/figures/results_chart.png)
 
@@ -129,9 +131,11 @@ specifically got missed or over-flagged, and the full regression story is in
 ## Project status
 
 **All 24 tasks across both tracks and all 4 weeks are done**, plus a post-submission fix cycle
-that improved two of three targeted precision problems and, honestly, made a third one worse for
-a well-understood reason (ADR-015/017 — see Status log below). Verified, not assumed: full test
-suite passes (`uv run python -m pytest`, 16 tests), and the complete pipeline was run live
+that shipped four fixes, hit a real regression along the way, diagnosed it precisely instead of
+guessing, and repaired it rather than reverting — landing better than the original baseline on
+precision, false positives, and false-alarm rate (ADR-015/017/018 — see Status log below).
+Verified, not assumed: full test suite passes (`uv run python -m pytest`, 16 tests), and the
+complete pipeline was run live
 end-to-end (retrieval → Hinglish generation → decomposition → per-claim verification) as a final
 check — see the week-by-week log below and `docs/problems_and_decisions.md` for what "done"
 actually involved (multiple memory-constrained index rebuilds, a Groq model deprecation
@@ -208,21 +212,25 @@ Architecture and implementation report sections written
 (`docs/report_architecture_and_implementation.md`), pairing with Track B's evaluation/results
 sections. Presentation slides prepared (`docs/slides.md`).
 
-Post-submission fix cycle (ADR-015/016/017): implemented three of P-008's diagnosed fixes —
+Post-submission fix cycle (ADR-015/016/017/018): implemented three of P-008's diagnosed fixes —
 split the oversized Post-Matric Scholarship knowledge-base row into 12 atomic facts (confirmed
 fixed the retrieval misses it caused), filtered degenerate decomposition fragments out of
 verification, and added explicit verifier-prompt handling for claims describing an absence of
-information. Added multi-key Groq failover (`GROQ_API_KEY_2`/`_3`/`_4`, ADR-016) to get a full
-209-claim re-verification done same-day against Groq's daily quota. Measured result: precision
-0.21→0.18, recall **0.71→0.42**. Two fixes worked as designed; the third — verified correct in
-isolation — regressed recall because it interacts with wrong-scheme retrieval, deliberately left
-unfixed. 9 of 14 new false negatives have wrong-scheme evidence: bad evidence genuinely doesn't
-discuss a claim's real topic, and the new prompt tells the judge to trust that absence
-confidently instead of hedging. An eval-only scheme-filtered retrieval diagnostic was built to
-isolate the effect but didn't finish (blocked by a persistent Windows Application Control policy
-on native DLLs, an environment issue, not a logic one) — deprioritized rather than fought
-further. The regression is disclosed as-is, not reverted: reverting would hide the retrieval
-problem behind a less decisive judge again rather than fix it. Full account in ADR-017
+information. Added multi-key Groq failover (`GROQ_API_KEY_2`/`_3`/`_4`, ADR-016) to get full
+209-claim re-verifications done same-day against Groq's daily quota. First measured result:
+precision 0.21→0.18, recall **0.71→0.42** — two fixes worked as designed, the third (verified
+correct in isolation) regressed recall because it interacted with wrong-scheme retrieval,
+deliberately left unfixed. 9 of 14 new false negatives had wrong-scheme evidence: bad evidence
+genuinely doesn't discuss a claim's real topic, and the new prompt told the judge to trust that
+absence confidently instead of hedging (full mechanism in ADR-017). An eval-only scheme-filtered
+retrieval diagnostic was built to isolate the effect but didn't finish (blocked by a persistent
+Windows Application Control policy on native DLLs, an environment issue) — turned out not to be
+needed. **Fixed, not reverted (ADR-018):** added a relevance check to the same instruction —
+verify the evidence is about the claim's scheme before trusting its silence — verified directly
+against the real failing case, then re-measured end-to-end. **Final result: precision 0.24,
+recall 0.67, false positives 65→50, false-alarm rate 0.57→0.50** — better than the original
+pre-fix baseline on precision, false positives, and false-alarm rate, with recall recovered to
+within 4 points of where the project started. Full account in ADR-017/ADR-018
 (`docs/problems_and_decisions.md`); results above reflect this final, reported state.
 
 See [`docs/problems_and_decisions.md`](docs/problems_and_decisions.md) for the running decision

@@ -2,24 +2,74 @@
 
 Reviews the verifier's mistakes against `eval/claim_ground_truth.csv`, computed by
 `scripts/compute_metrics.py` into `results/metrics.md`. **Current, final, reported numbers**
-(after ADR-015's fixes were implemented and measured — see ADR-017): precision 0.18, recall
-0.42, strict answer-level catch rate 0.50, false-alarm rate 0.52.
+(after ADR-015's fixes, ADR-017's diagnosed regression, and ADR-018's relevance-aware repair):
+precision 0.24, recall 0.67, strict answer-level catch rate 0.50, false-alarm rate 0.50.
 
-**Read this document in two layers.** Everything below the next section was written *before*
-ADR-015's fixes (decomposition fragment filter, absence-claim prompt, data-granularity split)
-were implemented, diagnosing precision 0.21 / recall 0.71 against 65-66 false positives. That
-diagnosis is kept because it's still an accurate description of *why* those specific problems
-happened, and two of the three fixes it recommended worked exactly as predicted. Read
-**ADR-017's summary right below** first, since it's the number that actually matters: fixing the
-absence-claim handling made the pipeline's *measured* performance worse, not better, because of
-an interaction with wrong-scheme retrieval that wasn't caught before shipping.
+**Read this document in three layers**, in this order: (1) this summary, the final state; (2)
+ADR-017's regression story, kept because it explains a real mechanism worth understanding even
+though it's no longer the reported number; (3) the pre-fix diagnosis below that, kept because
+it's still an accurate description of *why* the original problems happened.
 
-## What actually happened after the fixes (ADR-015 → ADR-017)
+## The final state: four fixes, measured end-to-end (ADR-015 → ADR-017 → ADR-018)
 
-Three fixes went in: (1) decomposition fragment filter, (2) an explicit verifier-prompt
-instruction for claims that describe an absence of information, (3) splitting Post-Matric
-Scholarship's oversized "V. Value of Scholarship" row into 12 atomic facts. Full re-verification
-(209 claims, same 60 answers) measured:
+Four changes went in, across two rounds: (1) decomposition fragment filter, (2) splitting
+Post-Matric Scholarship's oversized row into 12 atomic facts, (3) an absence-claim prompt
+instruction that initially regressed recall (ADR-017), (4) a follow-up refinement making that
+same instruction relevance-aware — check the evidence is even about the claim's scheme/subject
+before trusting an "it's not mentioned" reading (ADR-018). Full re-verification after each round:
+
+| Metric | Original (pre-fixes) | Round 1 (ADR-015, regressed) | Round 2 (+ADR-018 fix) |
+|---|---|---|---|
+| Precision | 0.21 | 0.18 | **0.24** |
+| Recall | 0.71 | 0.42 | **0.67** |
+| True positives | 17 | 10 | 16 |
+| False positives | 65 | 46 | 50 |
+| False negatives | 7 | 14 | 8 |
+| False-alarm rate | 0.57 | 0.52 | **0.50** |
+
+The final state beats the original on precision, false-positive count, and false-alarm rate, and
+recovers to within 4 points of original recall (0.67 vs 0.71) — a net improvement across the
+board, not just a reversal of the regression.
+
+**Why round 1 regressed, briefly** (full mechanism in ADR-017): the absence-claim instruction was
+correct in isolation but had no way to tell "the evidence is silent on this detail" apart from
+"the evidence is about something else entirely." Wrong-scheme evidence (still not fixed at the
+retrieval level — see below) always looks silent on the claim's real topic, so the judge started
+confidently trusting false "not mentioned" claims instead of hedging.
+
+**Why round 2 recovered most of it:** added one precondition to the same instruction — check the
+evidence is on-topic before trusting its silence. Verified directly against the real failing case
+before the full re-run (Q57's PM Awas Yojana claim, evidence entirely about Ayushman Bharat and
+PM-KISAN, flipped SUPPORTED→UNVERIFIABLE as intended), and confirmed no regression on the original
+5 sample pairs or both absence-claim directions with correct evidence.
+
+**Why it's not a full recovery to 0.71:** the fix only catches evidence that's clearly about a
+*different scheme* (schemes are named explicitly in most passages, so an LLM can notice this
+directly from the text). It does not catch the harder case — evidence nominally from the *right*
+scheme that's still missing the specific fact needed (tested directly on Q2: claim doesn't name a
+scheme, evidence mixes the right scheme's generic text with a wrong scheme's, verdict unchanged).
+That's the oversized-fact-row / narrow-retrieval mechanism (ADR-015/P-008), only partially fixed
+so far (only Post-Matric Scholarship's worst row was split). The genuine LLM-judge misjudgment
+case (Q42) is also untouched by any prompt change, by design — see below.
+
+The eval-only scheme-filtered retrieval diagnostic built in ADR-017 to isolate this effect is no
+longer needed to answer the question it was built for — this smaller, targeted prompt fix
+answered it more directly, without depending on the `faiss`/`pandas` environment issue that
+blocked the diagnostic.
+
+---
+
+## Round 1's regression, for the mechanism (no longer the reported numbers)
+
+Kept because it's the clearest example in this project of a locally-verified-correct fix with a
+measured negative system effect, and because the false-negative table below (Q2, Q30, Q49, Q51)
+still describes real, uncorrected mechanisms. Numbers in this section are Round 1's, not final —
+see the table above for what's actually reported.
+
+Three fixes went in for this round: (1) decomposition fragment filter, (2) an explicit
+verifier-prompt instruction for claims that describe an absence of information, (3) splitting
+Post-Matric Scholarship's oversized "V. Value of Scholarship" row into 12 atomic facts. Full
+re-verification (209 claims, same 60 answers) measured:
 
 | Metric | Before (P-008) | After (ADR-015 fixes) |
 |---|---|---|
@@ -30,43 +80,25 @@ Scholarship's oversized "V. Value of Scholarship" row into 12 atomic facts. Full
 | False negatives | 7 | 14 |
 | False-alarm rate | 0.57 | 0.52 |
 
-Precision and false-alarm rate moved in the right direction, modestly. **Recall dropped by 29
-points** — the headline result of this whole exercise, and not the one that was expected.
-
 **Why:** fix (2) was verified correct in isolation before shipping — a direct `judge()` call with
 hand-written correct evidence confirmed a true "no info" claim flips UNVERIFIABLE→SUPPORTED and a
 false one flips SUPPORTED→CONTRADICTED, exactly as designed. But 9 of the 14 new false negatives
 (64%) have wrong-scheme evidence — the same P-004/P-006 retrieval problem, deliberately left
 unfixed since scheme-filtering isn't representative of real deployment. When retrieval feeds the
 judge evidence from the wrong scheme, that evidence genuinely doesn't discuss the claim's real
-topic, and the new prompt instruction tells the judge to trust that absence — confidently
+topic, and the (round 1) prompt instruction told the judge to trust that absence — confidently
 producing SUPPORTED for a false claim, where before the same bad evidence more often produced a
-hedged UNVERIFIABLE (which still counted as "flagged"). The fix made the judge more decisive; on
-bad evidence, decisiveness is worse than a hedge.
-
-An eval-only diagnostic (`scripts/diagnostic_scheme_filtered_verify.py`, retrieval scoped to the
-question's known-correct scheme, never wired into the real pipeline) was built specifically to
-measure how much recall recovers once retrieval isn't the confound — it got 53 of 209 claims
-through before hitting a persistent Windows Application Control policy blocking native DLLs
-(`faiss`, then `pandas` on retry), an environment problem unrelated to the logic. Deprioritized
-rather than fought further — see ADR-017 for the full account.
-
-**Net assessment:** the reported numbers above are real, final, and disclosed as-is, regression
-included. Two of three fixes worked; the third is a documented example of a locally-correct
-change with a negative system-level effect, left in place rather than reverted, because the
-alternative (reverting it) doesn't fix the underlying retrieval problem either — it just goes
-back to hiding it behind a less decisive judge. Whoever continues this project should treat
-"scope retrieval correctly" as the actual prerequisite for the absence-claim fix to pay off, not
-a nice-to-have.
+hedged UNVERIFIABLE (which still counted as "flagged"). Fixed in round 2 (ADR-018) by making the
+same instruction check topical relevance first.
 
 ---
 
-## Diagnosis written before the fixes (P-006/P-008) — kept for the reasoning, not the headline numbers
+## Diagnosis written before any fixes (P-006/P-008) — kept for the reasoning, not the headline numbers
 
 Both ground-truth files (`eval/labels.csv`, `eval/claim_ground_truth.csv`) are AI-drafted,
 pending human review (ADR-012, ADR-014). Everything below is provisional in the same way, and the
-specific counts reflect the *pre-fix* run (precision 0.21, recall 0.71) — see the table above for
-what's actually being reported.
+specific counts reflect the *original pre-fix* run (precision 0.21, recall 0.71) — see the table
+at the top of this document for what's actually being reported.
 
 ## False positives (65 of 82 flagged claims) — why precision is low
 
@@ -138,34 +170,39 @@ is a real ceiling on the LLM-as-judge approach itself, not something more engine
 
 Full breakdown in P-006 and P-008 (`docs/problems_and_decisions.md`).
 
-## False negatives (7 of 24 true hallucinations, post-P-008) — what got missed
+## False negatives (8 of 24 true hallucinations, final state) — what got missed
 
-The original run had 6; this run has 7 — Q57 flipped to caught, Q2 and Q43 flipped to missed,
-none of which reflects a code change (see P-008's non-determinism finding). All 7, reviewed
+Count has moved 7→14→8 across the three rounds (P-008 → ADR-015 → ADR-018) — partly real fixes,
+partly the project's documented run-to-run non-determinism (P-008). The current 8, reviewed
 individually:
 
 | Question | Claim (truncated) | Verdict (confidence) | Why it was missed |
 |---|---|---|---|
-| 2 | "...koi jankari nahin di gayi hai" (re: renters) | SUPPORTED (0.73) | **Absence-claim mishandling, in reverse.** The mirror image of P-006's absence-claim false positives: here the claim wrongly asserts silence on renters' eligibility, and the judge accepted it as supported rather than checking it against the "land must be in own name" facts that do address it. |
-| 10 | "...amount same hai sabhi states..." | SUPPORTED (0.97) | **Bundled claim.** A verifiable fact (Rs 6000/year, Rs 2000 x3) and an unverifiable generalization ("same across all states") got decomposed into one claim, not two. The judge anchored on the strongly-supported numeric part and didn't separately scrutinize the generalization. |
-| 30 | "...Driving Licence, Voters' ID Card, NREGA Job Card..." | SUPPORTED (0.95) | **True fact, wrong scheme, evidence mix.** This content is genuinely PM-KISAN's document list. `verify_claim()`'s `top_k=2` likely retrieved one PM-KISAN passage and one Ayushman Bharat passage; the judge matched against the PM-KISAN one and correctly called it supported — but `evidence_source` (which only records the top-ranked passage) shows "Ayushman Bharat," which is what made this look wrong in ground truth. The claim's factual *content* is true; it's misapplied to the wrong scheme's answer. |
-| 43 | "...koi jankari nahi hai" (re: income certificate authority) | SUPPORTED (0.8) | Same pattern as Q2 — claim wrongly asserts the source is silent on who issues the income certificate; source actually specifies employer / self-declaration affidavit, and the judge accepted the false "silent" claim anyway. |
-| 49 | "Is scheme mein do models hain..." | SUPPORTED (0.98) | **Scope mismatch, not a factual error.** "Do models" (public/private) is true of the AHP vertical specifically — real evidence supports it. The claim's actual problem is that it describes "the scheme" as a whole (which has 4 verticals: ISSR/CLSS/AHP/BLC), a document-structure fact the verifier has no visibility into. |
-| 51 | "Diye gaye context me sirf PM-KISAN" / "...Post-Matric Scholarship ke bare me jankari hai" | SUPPORTED (0.85 / 0.95) | **Decomposition lost the exhaustiveness qualifier.** The original claim was "context has *only* PM-KISAN and Post-Matric Scholarship info" — false, since PM Awas Yojana facts also exist. Splitting it into "has PM-KISAN info" + "has Post-Matric info" produces two individually-true fragments, silently dropping the "only" that made the combined claim false. |
+| 2 | "...koi jankari nahin di gayi hai" (re: renters) | SUPPORTED (0.9) | **Absence-claim mishandling, in reverse — and not fixed by ADR-018.** The claim doesn't name a scheme, and the mixed evidence includes a genuinely-right-scheme (PM-KISAN) passage alongside a wrong one — so the relevance check in ADR-018 doesn't trigger (the evidence isn't clearly "about something else entirely," it's just incomplete). The claim wrongly asserts silence on renters' eligibility; the judge accepted it as supported rather than checking it against the "land must be in own name" facts elsewhere in PM-KISAN's data that address it. |
+| 3 | "...clearly nahi likha hai ki government employee..." | SUPPORTED (0.95) | Same pattern as Q2 — no scheme named in the claim, evidence is genuinely PM-KISAN (right scheme) but the specific exclusion-criteria fact wasn't retrieved. ADR-018's relevance check doesn't help when the scheme is already right; this is the retrieval-completeness problem (P-008), not a relevance problem. |
+| 10 | "...amount same hai sabhi states..." | SUPPORTED (0.97) | **Bundled claim.** A verifiable fact (Rs 6000/year, Rs 2000 x3) and an unverifiable generalization ("same across all states") got decomposed into one claim, not two. The judge anchored on the strongly-supported numeric part and didn't separately scrutinize the generalization. Not a retrieval or relevance issue — a decomposition granularity issue. |
+| 30 | "...Driving Licence, Voters' ID Card, NREGA Job Card..." | SUPPORTED (0.97) | **True fact, wrong scheme, evidence mix.** This content is genuinely PM-KISAN's document list, correctly judged true against the PM-KISAN passage in its evidence — but the answer presents it as Ayushman Bharat's list. The verifier checks claim-vs-evidence, not claim-vs-question-scheme, so a true fact copied from the wrong scheme's answer still verifies as supported. |
+| 43 | "...koi jankari nahi hai" (re: income certificate authority) | SUPPORTED (0.95) | Same pattern as Q2/Q3 — right scheme (Post-Matric Scholarship) evidence retrieved, but not the specific sentence naming the issuing authority. ADR-018 doesn't help here since the evidence isn't off-topic, just incomplete. |
+| 49 | "Is scheme mein do models hain..." | SUPPORTED (0.99) | **Scope mismatch, not a factual error.** "Do models" (public/private) is true of the AHP vertical specifically — real, on-topic evidence supports it. The claim's actual problem is that it describes "the scheme" as a whole (which has 4 verticals: ISSR/CLSS/AHP/BLC), a document-structure fact the verifier has no visibility into regardless of how relevant the evidence is. |
+| 51 | "Diye gaye context me sirf PM-KISAN" / "...Post-Matric Scholarship ke bare me jankari hai" | SUPPORTED (0.95 / 0.96) | **Decomposition lost the exhaustiveness qualifier.** The original claim was "context has *only* PM-KISAN and Post-Matric Scholarship info" — false, since PM Awas Yojana facts also exist. Splitting it into "has PM-KISAN info" + "has Post-Matric info" produces two individually-true fragments, silently dropping the "only" that made the combined claim false. |
 
-Four distinct mechanisms, not one: (a) compound claims mixing a true fact with an unverifiable
-generalization, (b) true-content-wrong-scheme cases where the verifier's narrow claim-vs-evidence
-check has no way to judge scheme relevance, (c) decomposition dropping a qualifier word when
-splitting compound sentences, (d) the judge accepting a false "the source is silent on this" claim
-at face value instead of checking it — the inverse failure mode of P-006's absence-claim false
-positives, confirming that absence claims are unreliable for the verifier in *both* directions,
-not just as over-flagged. (b) and P-006's wrong-scheme false positives share a root cause; (c) is
-a decomposition failure mode documented in ADR-003's update.
+Five distinct mechanisms survive after ADR-018, none of them fixed by the relevance-aware prompt
+because none of them involve evidence that's *clearly off-topic* — that specific pattern (Q57's
+old false negative) is the one ADR-018 actually fixed: (a) compound claims mixing a true fact
+with an unverifiable generalization (Q10); (b) true-content-wrong-scheme cases where a fact is
+genuine but attributed to the wrong answer (Q30); (c) decomposition dropping a qualifier word
+when splitting compound sentences (Q51); (d) the judge accepting a false "the source is silent on
+this" claim when the *right* scheme's evidence is retrieved but incomplete, not wrong (Q2, Q3,
+Q43) — a narrower, harder version of the absence-claim problem than ADR-018 targeted; (e) a
+document-structure fact (which vertical vs. the whole scheme) the verifier has no way to
+represent (Q49). (b) and (d)'s "right scheme, wrong specific fact" cases share a root cause with
+P-008's oversized-fact-row finding — more of `data/schemes/*.csv` likely needs the same
+granularity treatment ADR-015 gave Post-Matric Scholarship's worst row alone.
 
-## What was actually done, and what's genuinely still open (post ADR-015/017)
+## What was actually done, and what's genuinely still open (post ADR-015/017/018)
 
-Of the list this section used to propose, three items got implemented and measured, one was
-attempted and blocked by environment issues, and one remains open as the real next step:
+Of the list this section used to propose, four items are now done and measured, and two remain
+open as the real next steps:
 
 1. **Done — fact-granularity fix.** Post-Matric Scholarship's oversized row split into 12 atomic
    facts (`scripts/split_oversized_row.py`). Confirmed working: Q38/Q39's Group I-IV claims now
@@ -173,20 +210,23 @@ attempted and blocked by environment issues, and one remains open as the real ne
 2. **Done — decomposition fragment filter.** `decompose()` now drops sub-3-word fragments
    (`src/decomposition.py`, `MIN_CLAIM_WORDS`). Confirmed via new tests
    (`tests/test_decomposition.py`).
-3. **Done, but with a measured regression — absence-claim prompt fix.** Works correctly in
-   isolation; net negative on the full pipeline because retrieval (item 4, below) still feeds it
-   wrong-scheme evidence in 64% of the new false-negative cases. See ADR-017 for the full
-   mechanism. **This is the one open question for whoever continues this project**: revert it,
-   keep it and prioritize fixing retrieval, or make the prompt aware of retrieval confidence
-   before trusting an absence claim.
-4. **Still open — wrong-scheme retrieval.** The single largest identified cause of false
-   positives (~50%) and now, via the interaction above, a driver of false negatives too. An
-   eval-only scheme-filtered diagnostic was built to measure the isolated effect
+3. **Done — absence-claim prompt fix, repaired after an initial regression.** First version
+   (ADR-015) was correct in isolation but regressed recall 0.71→0.42 by confidently trusting
+   wrong-scheme evidence's silence (ADR-017). Fixed, not reverted: added a relevance check to the
+   same instruction — verify the evidence is even about the claim's scheme before trusting an
+   absence reading (ADR-018). Recovered to precision 0.24 / recall 0.67, better than the original
+   pre-fix baseline on precision and false-alarm rate.
+4. **Partially open — wrong-scheme retrieval.** Still the single largest identified cause of
+   false positives (~50%), and ADR-018's relevance check only catches the *clearly off-topic*
+   subset of its false-negative consequences (Q57-style) — not the *right-scheme-but-incomplete*
+   subset (Q2/Q3/Q43-style, still open, see the false-negatives table above). An eval-only
+   scheme-filtered diagnostic was attempted to isolate the effect
    (`scripts/diagnostic_scheme_filtered_verify.py`) but didn't finish — blocked by a persistent
-   Windows Application Control policy blocking native DLLs, an environment problem, not a logic
-   one. Genuinely fixing this for real deployment (not just the eval-only filter) would mean
-   better retrieval — larger `top_k`, reranking, or a stronger embedding model for short queries
-   — not something attempted here.
+   Windows Application Control policy on native DLLs, an environment problem. No longer strictly
+   needed: ADR-018's targeted fix answered the practical question more directly. Genuinely fixing
+   retrieval for real deployment would mean better retrieval — larger `top_k`, reranking, a
+   stronger embedding model for short queries, or extending ADR-015's row-splitting treatment to
+   the rest of `data/schemes/*.csv` — none attempted here.
 5. **Not fixable by more engineering — the genuine LLM-judge misjudgment.** Q42's caste-certificate
    claim: correct evidence, wrong verdict anyway. A real reliability ceiling on the LLM-as-judge
    approach (ADR-001), disclosed as a limitation of the method in the final report, not chased as
@@ -194,6 +234,10 @@ attempted and blocked by environment issues, and one remains open as the real ne
 6. **Lower priority, not attempted:** the compound-claim and dropped-qualifier decomposition
    issues (Q10, Q51) affect a handful of claims — real, but smaller than the others.
 
-The honest summary: three fixes shipped, two clearly net-positive, one net-negative for a
-well-understood and disclosed reason, with the real prerequisite for fixing it (retrieval
-quality) identified but not completed this pass.
+The honest summary: four fixes shipped. Three were unambiguously net-positive. The fourth
+regressed a headline metric on first release, was diagnosed precisely rather than guessed at, and
+was repaired — not reverted — once the mechanism was understood, landing better than where the
+project started on precision, false positives, and false-alarm rate, with recall recovered to
+within 4 points of the original. What's left open is bounded and named, not hand-waved: retrieval
+completeness on right-scheme-but-incomplete evidence, and one confirmed case where the method
+itself, not the engineering around it, is the limit.

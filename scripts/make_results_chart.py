@@ -11,11 +11,11 @@ import matplotlib.pyplot as plt
 OUTPUT = "docs/figures/results_chart.png"
 
 metrics = {
-    "Precision\n(flagged claims)": 0.18,
-    "Recall\n(hallucinated claims)": 0.42,
+    "Precision\n(flagged claims)": 0.24,
+    "Recall\n(hallucinated claims)": 0.67,
     "Catch rate\n(strict)": 0.50,
-    "Catch rate\n(loose)": 0.72,
-    "False-alarm rate\n(correct answers)": 0.52,
+    "Catch rate\n(loose)": 0.78,
+    "False-alarm rate\n(correct answers)": 0.50,
 }
 
 colors = ["#c0392b", "#27ae60", "#2980b9", "#5dade2", "#e67e22"]
@@ -34,7 +34,7 @@ for bar, value in zip(bars, metrics.values()):
 
 ax.set_ylim(0, 1.0)
 ax.set_ylabel("Score")
-ax.set_title("CodeSwitch-Verify — Verification Layer Results\n(60 questions, 209 claims, 24 ground-truth hallucinated — post ADR-015 fixes)")
+ax.set_title("CodeSwitch-Verify — Verification Layer Results\n(60 questions, 209 claims, 24 ground-truth hallucinated — final, post ADR-018)")
 ax.axhline(0.5, color="gray", linewidth=0.5, linestyle="--")
 plt.xticks(rotation=0, fontsize=9)
 plt.tight_layout()

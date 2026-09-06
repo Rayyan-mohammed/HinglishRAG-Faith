@@ -178,17 +178,22 @@ story rather than duplicated:
   (P-007). P-008 also found real run-to-run non-determinism in the verifier even at
   `temperature=0`. All retrieval/decomposition/verification quality findings, not implementation
   bugs — detailed in `docs/error_analysis.md`.
-- **ADR-015 / ADR-017** — implemented fixes for three of P-008's diagnosed causes (knowledge-base
-  row split, decomposition fragment filter, absence-claim prompt handling) and measured the
-  result end-to-end rather than assuming the fixes worked: precision 0.21→0.18, recall
-  **0.71→0.42**. The knowledge-base split and fragment filter worked as designed; the
-  absence-claim prompt, verified correct in isolation, regressed recall because it interacts with
-  wrong-scheme retrieval (deliberately left unfixed — real deployment can't know a question's
-  scheme in advance). Shipped and disclosed as-is rather than reverted, since reverting would hide
-  the retrieval problem behind a less decisive judge rather than fix it. An eval-only
-  scheme-filtered retrieval diagnostic (`scripts/diagnostic_scheme_filtered_verify.py`) was built
-  to isolate the effect but didn't finish, blocked by a persistent Windows Application Control
-  policy on native DLLs (`faiss`, then `pandas`) — an environment problem, not a code one.
+- **ADR-015 / ADR-017 / ADR-018** — implemented fixes for three of P-008's diagnosed causes
+  (knowledge-base row split, decomposition fragment filter, absence-claim prompt handling) and
+  measured the result end-to-end rather than assuming the fixes worked: precision 0.21→0.18,
+  recall **0.71→0.42**. The knowledge-base split and fragment filter worked as designed; the
+  absence-claim prompt, verified correct in isolation, regressed recall because it interacted
+  with wrong-scheme retrieval (deliberately left unfixed — real deployment can't know a
+  question's scheme in advance). An eval-only scheme-filtered retrieval diagnostic
+  (`scripts/diagnostic_scheme_filtered_verify.py`) was built to isolate the effect but didn't
+  finish, blocked by a persistent Windows Application Control policy on native DLLs (`faiss`,
+  then `pandas`) — an environment problem, not a code one. Repaired rather than reverted: added
+  one precondition to the same instruction — check the evidence is about the claim's scheme
+  before trusting its silence — verified against the actual failing case, then re-measured
+  end-to-end. **Final: precision 0.24, recall 0.67, false positives 65→50, false-alarm rate
+  0.57→0.50** — better than the original on three of four axes, with recall recovered to within
+  4 points of it. The scheme-filtered diagnostic turned out unnecessary once this smaller,
+  targeted fix answered the underlying question directly.
 - **P-007** — a malformed source PDF silently corrupted two figures in the scraped knowledge base;
   caught by chance during manual testing, which is itself evidence that the scraped-not-authored
   knowledge base needed (and didn't get, beyond one spot-check) systematic verification against

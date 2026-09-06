@@ -108,13 +108,12 @@ provisional throughout.
 
 ## Reading the results honestly
 
-- **Precision is weak**: about 1 in 5-6 flagged claims is an actual hallucination
-- **Recall is the number to watch — it dropped**: 0.71 → 0.42 after our own fixes (next slides
-  explain why, in full)
+- **Precision 0.24, recall 0.67** — the final, reported numbers, after a detour (next slides)
+- **Beats the original pre-fix baseline** on precision (0.24 vs 0.21), false positives (50 vs 65),
+  and false-alarm rate (0.50 vs 0.57); recall recovered to within 4 points of it (0.67 vs 0.71)
 - **The baseline has a 0% catch rate by definition** — the plain pipeline would let every one of
   the 18 non-fully-correct answers through completely unflagged
-- The answer-level strict catch rate held steady at 0.50 despite the claim-level recall drop —
-  the answers that got caught are still caught, driven by different claims within them
+- The answer-level strict catch rate holds at 0.50 throughout every version of this pipeline
 - Numbers are samples, not fixed measurements — re-running on identical claim text at
   `temperature=0` still moves individual verdicts run to run
 
@@ -146,61 +145,72 @@ absence-claims at face value
 
 ---
 
-## We shipped three fixes. Two worked. One made things worse — on purpose, we found out why
+## We shipped four fixes. Three worked outright. One broke, then got repaired
 
 | Fix | Result |
 |---|---|
 | Split the oversized, multi-topic knowledge-base row into 12 atomic facts | ✅ Confirmed: the retrieval misses it targeted are gone |
 | Drop degenerate decomposition fragments before verification | ✅ Confirmed: fragments no longer reach the judge |
-| Add explicit prompt handling for "absence" claims | ⚠️ Correct in isolation, **net-negative on the full pipeline** |
+| Add explicit prompt handling for "absence" claims | ⚠️ Correct in isolation, **regressed the full pipeline** — see next slide |
+| Make that same instruction check topical relevance first | ✅ Repaired the regression, net-positive overall |
 
-Before → after: **precision 0.21 → 0.18, recall 0.71 → 0.42.**
+Round 1 → round 2: **precision 0.18 → 0.24, recall 0.42 → 0.67.**
+Original → final: **precision 0.21 → 0.24, recall 0.71 → 0.67, false positives 65 → 50.**
 
 ---
 
 ## Why the third fix backfired
 
-The absence-claim fix tells the judge: *"if the evidence doesn't discuss this, an 'it's not
+The absence-claim fix told the judge: *"if the evidence doesn't discuss this, an 'it's not
 mentioned' claim is accurate — say SUPPORTED."* Verified correct with hand-written test cases
 before shipping.
 
 The problem: wrong-scheme retrieval was **deliberately left unfixed** (a real user's question
 isn't pre-labeled with its scheme). When retrieval pulls evidence from the wrong scheme, that
-evidence genuinely doesn't discuss the claim's real topic — so the new instruction tells the judge
-to trust that absence. **9 of 14 new false negatives (64%) have wrong-scheme evidence.**
+evidence genuinely doesn't discuss the claim's real topic — so the instruction told the judge to
+trust that absence. **9 of 14 new false negatives (64%) had wrong-scheme evidence.**
 
 Before the fix, bad evidence more often produced a hedge (UNVERIFIABLE — still counted as
-flagged). After the fix, the same bad evidence produces confident SUPPORTED. The fix made the
+flagged). After the fix, the same bad evidence produced confident SUPPORTED. The fix made the
 judge more decisive; decisiveness on bad evidence is worse than a hedge.
 
 **We tried to measure the isolated effect** with an eval-only, scheme-filtered retrieval
 diagnostic (never wired into the real pipeline) — it got 53 of 209 claims through before hitting
-a persistent Windows security policy blocking native library DLLs, unrelated to the logic.
-Deprioritized rather than fought further.
+a persistent Windows security policy blocking native library DLLs, unrelated to the logic. That
+diagnostic turned out not to be necessary — see next slide.
 
 ---
 
-## The honest call we're leaving open
+## The fix for the fix, not a reversion
 
-Reverting the prompt fix would erase the regression — but also erase its real, verified benefit,
-and wouldn't fix the actual problem (wrong-scheme retrieval), just hide it behind a less decisive
-judge again.
+Reverting would have erased the regression but also the fix's real, verified benefit, and
+wouldn't have touched the actual problem (wrong-scheme retrieval) — just hidden it behind a less
+decisive judge again.
 
-**Kept as-is, disclosed plainly**, because the real prerequisite — scoping retrieval correctly —
-is identified but not completed. This is the project's one open, unresolved finding: a
-locally-correct fix with a measured negative system effect, understood well enough to explain
-exactly why, not well enough to call fixed.
+**Instead: added one precondition to the same instruction.** Before trusting an "it's not
+mentioned" reading, the judge now checks whether the evidence is even about the claim's
+scheme/subject at all — schemes are named explicitly in almost every passage, so an LLM can
+notice this directly from the text, no retrieval score or scheme-filter needed.
+
+Verified against the exact real case that caused a false negative (evidence entirely about a
+different scheme) before re-running everything: flipped SUPPORTED → UNVERIFIABLE, as intended. No
+regression on the cases that already worked.
+
+**Result: precision 0.24, recall 0.67** — better than where the project started on precision,
+false positives, and false-alarm rate; recall recovered to within 4 points of the original.
 
 ---
 
-## Everything else that's still true
+## What's still open — named, not hand-waved
 
+- **Right-scheme-but-incomplete retrieval**: the relevance fix only catches evidence that's
+  *clearly off-topic* — not evidence from the correct scheme that's simply missing the specific
+  fact needed. Extending the row-splitting fix beyond the one oversized row already handled would
+  likely help.
 - **Genuine LLM-judge misjudgment**: Q42's caste-certificate claim — correct evidence, wrong
   verdict anyway. A real reliability limit on the method, not an engineering bug.
 - **Non-determinism**: re-verifying identical claim text at `temperature=0` still moves individual
   verdicts run to run — any single reported number is a sample, not a fixed measurement.
-- **Wrong-scheme retrieval** remains the single largest identified cause of false positives
-  (~50%) and, now, a driver of false negatives too — the real next step for this project.
 
 ---
 
@@ -224,10 +234,10 @@ verification against its sources, not just internal consistency.
 - 60-question set — indicative for a course project, not a statistically powered benchmark
 - Generator and verifier share one model — self-verification bias never separately measured
 - Rule-based decomposition has known, documented failure modes on compound sentences
-- Retrieval and verification quality are entangled — confirmed concretely: a verifier fix that's
-  correct in isolation regressed recall because retrieval quality wasn't fixed alongside it
-- The absence-claim prompt fix ships with a known, measured recall regression (0.71→0.42), kept
-  rather than reverted because reverting hides the real problem instead of fixing it
+- Retrieval and verification quality are still entangled for the right-scheme-but-incomplete
+  case — the relevance fix only resolves the clearly-wrong-scheme subset
+- One confirmed genuine LLM-judge misjudgment (Q42) — a reliability ceiling on the method itself,
+  not something any prompt change fixed
 
 ---
 

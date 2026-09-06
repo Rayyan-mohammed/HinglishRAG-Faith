@@ -22,12 +22,18 @@ Respond with a JSON object only, in this exact format:
 Special case — the claim is itself a statement ABOUT what the evidence does or doesn't say
 (e.g. "the context doesn't mention X", "there is no information about Y", "iska koi jankari
 nahi hai"):
-- If the evidence genuinely never discusses that topic, the claim is an accurate description
-  of that silence — mark it SUPPORTED, not UNVERIFIABLE.
-- If the evidence actually does discuss that topic, the claim is factually wrong to say it's
-  absent — mark it CONTRADICTED.
-- Do not default this claim type to UNVERIFIABLE — decide based on whether the topic the claim
-  says is missing genuinely appears in the evidence or not.
+- First check: does the evidence appear to be about the same scheme/subject as the claim at
+  all, or does it read as being about a completely different scheme, topic, or context? If the
+  evidence looks like it was retrieved for the wrong subject entirely (not just silent on this
+  one detail, but about something else altogether), that means retrieval likely failed to find
+  the right passage — mark UNVERIFIABLE. Do not treat unrelated evidence as proof the claim's
+  topic is genuinely absent from the source as a whole.
+- Only if the evidence is clearly about the same scheme/subject as the claim: if it genuinely
+  never discusses the specific topic the claim asks about, the claim is an accurate description
+  of that silence — mark it SUPPORTED, not UNVERIFIABLE. If it actually does discuss that topic,
+  the claim is factually wrong to say it's absent — mark it CONTRADICTED.
+- Do not default this claim type to UNVERIFIABLE out of general caution — only use UNVERIFIABLE
+  here for the wrong-subject-evidence case above, or when the evidence is genuinely ambiguous.
 
 CLAIM: {claim}
 

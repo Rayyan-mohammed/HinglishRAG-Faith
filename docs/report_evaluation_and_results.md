@@ -48,50 +48,47 @@ with generation randomness rather than isolating the effect of verification.
 
 ## Results
 
-These are the final, reported numbers — from the ADR-015 fixes (decomposition fragment filter,
-absence-claim prompt, knowledge-base granularity split), measured end-to-end (ADR-017) on a fresh
-209-claim verification run against the corrected data. Reported as-is, including a regression that
-wasn't the intended outcome — see below.
+These are the final, reported numbers — after four fixes across two rounds (ADR-015, then
+ADR-018's repair of a regression ADR-017 diagnosed in between), measured end-to-end on a fresh
+209-claim verification run against the corrected data and prompt.
 
 | Metric | Value |
 |---|---|
-| Precision on flagged claims | 0.18 |
-| Recall on hallucinated claims | 0.42 |
+| Precision on flagged claims | 0.24 |
+| Recall on hallucinated claims | 0.67 |
 | Answer-level catch rate (strict) | 0.50 |
-| Answer-level catch rate (loose) | 0.72 |
-| False-alarm rate on correct answers | 0.52 |
+| Answer-level catch rate (loose) | 0.78 |
+| False-alarm rate on correct answers | 0.50 |
 
 Full breakdown (TP/FP/FN counts) in `results/metrics.md`.
 
-**Reading these numbers honestly — including the regression.** Before these fixes, the pipeline
-measured precision 0.21 / recall 0.71. After: precision 0.18, recall 0.42. Two of the three fixes
-worked exactly as intended (confirmed directly — the knowledge-base split fixed the specific
-retrieval misses it targeted; the fragment filter removed degenerate non-claims from
-verification). The third — an explicit prompt instruction for claims that describe an *absence*
-of information — was also verified correct in isolation before shipping, but interacts badly with
-a problem left deliberately unfixed: wrong-scheme retrieval. 9 of the 14 false negatives (64%,
-up from 6 before) have evidence from the wrong scheme; when that happens, the new prompt
-instruction tells the judge to trust the absence it sees (since the wrong evidence genuinely
-doesn't discuss the claim's real topic) rather than hedge to UNVERIFIABLE as it more often did
-before. The fix made the judge *more decisive* — and decisiveness on bad evidence is worse than a
-hedge. Full mechanism and the diagnostic that was attempted (and blocked by an unrelated
-environment issue) to measure the isolated effect are in ADR-017 and `docs/error_analysis.md`.
+**Reading these numbers honestly — including the detour.** Before any of these fixes, the
+pipeline measured precision 0.21 / recall 0.71. The first round of fixes (ADR-015) regressed
+recall to 0.42 — a real mistake, diagnosed rather than hidden (ADR-017): an explicit prompt
+instruction for claims describing an *absence* of information was correct in isolation but
+confidently validated false claims whenever retrieval fed it evidence from the wrong scheme,
+since wrong-scheme evidence always looks silent on the claim's real topic. Rather than reverting
+that fix — which would have erased the regression but also its real benefit, without touching the
+underlying retrieval problem — it was repaired: the same instruction now checks whether the
+evidence is even about the claim's scheme before trusting its silence (ADR-018), verified
+directly against the actual failing case before the full re-run. Final result: **precision 0.24
+and false-alarm rate 0.50 both beat the original pre-fix numbers**, false positives dropped from
+65 to 50, and recall recovered to 0.67 — within 4 points of where the project started, not fully
+back, because the relevance check only catches evidence that's clearly *off-topic*, not evidence
+from the *right* scheme that's merely incomplete (a distinct, still-open cause — see
+`docs/error_analysis.md`).
 
-**Why this is reported rather than silently reverted:** reverting the prompt fix would remove the
-regression but also remove its real, verified benefit whenever retrieval happens to be correct —
-it wouldn't fix the underlying problem (wrong-scheme retrieval), just hide it behind a less
-decisive judge again. The actual prerequisite — scoping retrieval correctly — is identified but
-not completed in this pass. This is disclosed as the project's one open, unresolved finding
-rather than smoothed over: a locally-verified-correct fix with a measured negative system-level
-effect, understood well enough to say exactly why, not well enough to say it's fully fixed.
+**What's still open, named rather than hand-waved:** two false-negative causes remain
+unaddressed by any of the four fixes — right-scheme-but-incomplete retrieval (extending ADR-015's
+row-splitting treatment beyond the one Post-Matric Scholarship row it covered would likely help),
+and one confirmed case (Q42) where the LLM-judge had the fully correct evidence and still ruled
+wrong — a genuine reliability limit of the method itself, not an engineering gap.
 
 **Comparison to the plain (unverified) baseline still holds regardless:** every one of the 18
 non-fully_correct answers would reach the user completely unflagged under the plain pipeline — a
-0% catch rate on anything, by definition. The verified pipeline still catches half of those
-answers (0.50 strict catch rate, unchanged by the regression above, since it's driven by
-answer-level rather than claim-level flagging). Whether today's precision/recall trade is worth
-shipping as-is, or whether retrieval needs fixing first, is the judgment call this report hands
-off rather than settles.
+0% catch rate on anything, by definition. The verified pipeline catches half of those answers
+(0.50 strict catch rate) while now also being more precise and less prone to false alarms than
+where this project started.
 
 ## Limitations
 
@@ -101,11 +98,10 @@ off rather than settles.
   statistically powered or publication-scale claim (blueprint Section 11).
 - Generator and verifier share one model (`openai/gpt-oss-120b`) — the self-verification bias
   risk flagged in ADR-001 was never separately measured.
-- Retrieval quality (wrong-scheme contamination, P-004/P-006) is entangled with verification
-  quality in these numbers, confirmed concretely by ADR-017: a verifier-prompt fix that is
-  correct in isolation produced a net-negative system result because retrieval quality wasn't
-  fixed alongside it. An eval-only scheme-filtered diagnostic was built to isolate the two but
-  didn't finish (blocked by an environment issue, not a logic one) — see ADR-017.
-- The absence-claim prompt fix (ADR-015) is shipped with a known, measured recall regression
-  (0.71→0.42) for a well-understood reason (above). This is the project's clearest example of a
-  fix that needed a prerequisite (correct retrieval scoping) that wasn't in scope to complete.
+- Retrieval quality (wrong-scheme contamination, P-004/P-006) is still entangled with
+  verification quality for the *right-scheme-but-incomplete* case — ADR-018's relevance check
+  only resolves the *clearly-wrong-scheme* subset. A genuine fix would mean better retrieval
+  (larger `top_k`, reranking, or extending the row-splitting from ADR-015 to more of
+  `data/schemes/*.csv`), not attempted here.
+- One confirmed genuine LLM-judge misjudgment (Q42, correct evidence, wrong verdict) — a
+  disclosed reliability ceiling on the LLM-as-judge method, not something a prompt fix resolved.
