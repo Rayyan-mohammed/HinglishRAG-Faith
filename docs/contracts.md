@@ -87,13 +87,13 @@ documents.
 | `category` | str | eligibility / deadline / amount / documents |
 | `question` | str | Hinglish |
 
-### `eval/labels.csv` — built, 60 rows (ground truth, B2). See ADR-012.
+### `eval/labels.csv` — built, 60 rows (ground truth, B2). See ADR-012, ADR-022.
 | column | type | notes |
 |---|---|---|
 | `question_id` | int | joins to `questions.csv` |
 | `label` | str | `fully_correct` / `partially_hallucinated` / `fully_hallucinated` |
 | `notes` | str | why this label, cites the specific supporting/contradicting fact |
-| `reviewed_by_human` | bool | `FALSE` until manually spot-checked; flip to `TRUE` per row after review, per ADR-012 |
+| `reviewed_by_human` | bool | `TRUE` on the 18 rows reviewed in ADR-022 (the non-`fully_correct` ones, which drive every answer-level metric); `FALSE` on the other 42, not yet reviewed |
 
 ### `results/generated_answers.csv` — built (A2), 60 rows, all `pipeline == "plain"`. No `"verified"` rows — see ADR-013.
 | column | type | notes |

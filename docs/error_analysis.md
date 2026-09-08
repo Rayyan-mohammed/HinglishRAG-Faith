@@ -3,16 +3,18 @@
 Reviews the verifier's mistakes against `eval/claim_ground_truth.csv`, computed by
 `scripts/compute_metrics.py` into `results/metrics.md`. **Current, final, reported numbers**
 (after ADR-015/017/018's fix-and-repair cycle, ADR-019/020's data-granularity extension and
-majority-vote judging, and ADR-021's switch to Claude with hybrid evidence retrieval): precision
-0.27, recall 0.71, strict answer-level catch rate 0.39, false-alarm rate 0.40 — the best precision
-and recall recorded simultaneously anywhere in this project.
+majority-vote judging, ADR-021's switch to Claude with hybrid evidence retrieval, and ADR-022's
+human review of the answer-level labels): precision 0.27, recall 0.71, strict answer-level catch
+rate 0.44, false-alarm rate 0.39 — the best precision and recall recorded simultaneously anywhere
+in this project, now measured against human-reviewed answer-level ground truth.
 
-**Read this document in five layers**, in this order: (1) this summary, the final state; (2)
-round 4 (ADR-021) below, the most recent and largest single jump in claim-level accuracy; (3) the
-ADR-015→018 cycle after that, where the numbers first moved from the original baseline; (4)
-ADR-017's regression story, kept because it explains a real mechanism worth understanding even
-though it's no longer the reported number; (5) the pre-fix diagnosis at the bottom, kept because
-it's still an accurate description of *why* the original problems happened.
+**Read this document in six layers**, in this order: (1) this summary, the final state; (2) round
+5 (ADR-022) below, the human-review correction that's now the reported answer-level numbers; (3)
+round 4 (ADR-021), the largest single jump in claim-level accuracy; (4) the ADR-015→018 cycle
+after that, where the numbers first moved from the original baseline; (5) ADR-017's regression
+story, kept because it explains a real mechanism worth understanding even though it's no longer
+the reported number; (6) the pre-fix diagnosis at the bottom, kept because it's still an accurate
+description of *why* the original problems happened.
 
 ## Round 4 (ADR-021): switched Groq → Claude, LLM decomposition, hybrid evidence retrieval — the first round to move precision and recall together
 
@@ -67,6 +69,32 @@ different claim text for a few claims — most notably Q2's first claim, which d
 hallucination) into "PM-KISAN IS only for landowners" (a true statement). Ground truth was
 re-graded against the claim text as actually produced each run, not the original answer's intent
 — a claim-level verifier can only be judged against the claims it's actually asked to check.
+
+## Round 5 (ADR-022): human review of the answer-level labels — corrected 2 of 18, denominator fix
+
+The 18 answers labeled non-`fully_correct` in `eval/labels.csv` — the ones that drive every
+answer-level metric — were reviewed by the user against the AI-drafted label and reasoning for
+each, one at a time. 16 confirmed as-is; 2 corrected: Q26 and Q40, both
+`partially_hallucinated` → `fully_correct`. Both had already been flagged as genuinely ambiguous
+in ADR-014's own notes ("previously re-checked and judged...") — the review confirmed that
+self-doubt was warranted. Neither Q26 nor Q40 had a claim in `HALLUCINATED_MARKERS`, so
+claim-level precision/recall (0.27/0.71) are completely unaffected. What changed is the
+denominator for answer-level metrics: 16 non-fully_correct answers instead of 18, 44 fully_correct
+instead of 42.
+
+| Metric | Round 4b (pre-review) | Round 5 (human-reviewed) |
+|---|---|---|
+| Precision | 0.27 | 0.27 |
+| Recall | 0.71 | 0.71 |
+| Strict answer-level catch rate | 0.39 | **0.44** |
+| Loose answer-level catch rate | 0.50 | **0.56** |
+| False-alarm rate | 0.40 | **0.39** |
+
+A second, unrelated bug surfaced fixing this: `scripts/compute_metrics.py`'s report template had
+`42` and `18`/`60` hardcoded into its prose instead of computed from the actual label counts — the
+same class of bug as an earlier hardcoded-`212` fix, just never caught because the counts hadn't
+changed since those strings were written. Fixed to derive `n_fully_correct`,
+`n_not_fully_correct`, and `n_zero_false_claim_answers` dynamically.
 
 ## Round 3 (ADR-019/020): extended data-granularity fix + majority-vote judging — a wash, not a further win
 
@@ -348,16 +376,26 @@ open as the real next steps:
     criteria" row had a mismatched body (duplicate of an unrelated fact), sourced from the same
     malformed PDF as P-007. Found while diagnosing ADR-021's context-only regression, fixed
     directly, matching P-007's precedent for hand-patching confirmed source corruption.
+12. **Done — human review of the answer-level ground truth (ADR-022).** All 18 non-`fully_correct`
+    labels reviewed by the user against the AI-drafted reasoning; 16 confirmed, 2 corrected (Q26,
+    Q40 → `fully_correct`). Satisfies ADR-006's requirement that ground truth come from a human,
+    not the LLM being measured — for the 18 rows that actually drive every reported answer-level
+    metric. The other 42 answer-level rows and the entire claim-level `eval/claim_ground_truth.csv`
+    remain AI-drafted, lower priority since they don't individually move any reported number.
 
-The honest summary: nine fixes shipped across three post-submission cycles. The first cycle's four
-fixes were three unambiguously net-positive plus one that regressed a headline metric on first
-release, diagnosed precisely and repaired rather than reverted. The second cycle (extended
-data-granularity fix + majority-vote judging) was a wash relative to that point — kept for sound
-engineering reasons, not a demonstrated score gain. The third cycle (Claude switch + LLM
-decomposition + hybrid evidence retrieval + a data fix) is the first to move precision and recall
-together, landing at **0.27 precision / 0.71 recall**, the best simultaneous result recorded
-anywhere in this project — beating even the very first pre-fix baseline. What's left open is
-bounded and named, not hand-waved: a still-inconsistent decomposer on bundled claims (Q10),
-true-content-wrong-scheme attribution needing a structurally different check (Q30), a
-document-structure scope mismatch the verifier has no representation for (Q49), and one confirmed
-case where the method itself, not the engineering around it, is the limit (Q42).
+The honest summary: ten fixes shipped across three post-submission engineering cycles, plus one
+human-review pass. The first cycle's four fixes were three unambiguously net-positive plus one
+that regressed a headline metric on first release, diagnosed precisely and repaired rather than
+reverted. The second cycle (extended data-granularity fix + majority-vote judging) was a wash
+relative to that point — kept for sound engineering reasons, not a demonstrated score gain. The
+third cycle (Claude switch + LLM decomposition + hybrid evidence retrieval + a data fix) is the
+first to move precision and recall together, landing at **0.27 precision / 0.71 recall**, the best
+simultaneous result recorded anywhere in this project — beating even the very first pre-fix
+baseline. Human review then confirmed 16 of 18 labels and corrected 2, moving answer-level catch
+rate to **0.44 strict / 0.56 loose** and false-alarm rate to **0.39** without touching claim-level
+precision/recall at all. What's left open is bounded and named, not hand-waved: a
+still-inconsistent decomposer on bundled claims (Q10), true-content-wrong-scheme attribution
+needing a structurally different check (Q30), a document-structure scope mismatch the verifier has
+no representation for (Q49), one confirmed case where the method itself, not the engineering
+around it, is the limit (Q42), and completing human review of the remaining 42 answer-level rows
+and the full claim-level ground truth.

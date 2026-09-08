@@ -238,8 +238,15 @@ story rather than duplicated:
   bug in `PM-KISAN.csv` (a row titled "exclusion criteria" had a mismatched body, sourced from
   the same malformed PDF as P-007). **Final: precision 0.27, recall 0.71, false positives 32,
   false negatives 5** — the best precision and recall recorded simultaneously anywhere in the
-  project, at the cost of a lower answer-level catch rate (an expected side effect of fewer false
-  positives, not a new problem).
+  project, at the cost of a lower answer-level catch rate at first (an expected side effect of
+  fewer false positives, not a new problem).
+- **ADR-022** — human review of `eval/labels.csv`'s 18 non-`fully_correct` rows (the ones that
+  drive every answer-level metric), closing the gap ADR-006 requires: ground truth independent of
+  the LLM being measured. 16 confirmed, 2 corrected (`partially_hallucinated` → `fully_correct`).
+  Claim-level precision/recall unaffected (0.27/0.71 unchanged); answer-level catch rate corrected
+  to strict 0.44 / loose 0.56, false-alarm rate to 0.39 — purely from fixing the denominator, not
+  from any verifier change. Also fixed a second hardcoded-count bug in `compute_metrics.py`. The
+  other 42 answer-level rows and the full claim-level ground truth remain AI-drafted.
 - **P-007** — a malformed source PDF silently corrupted two figures in the scraped knowledge base;
   caught by chance during manual testing, which is itself evidence that the scraped-not-authored
   knowledge base needed (and didn't get, beyond one spot-check) systematic verification against

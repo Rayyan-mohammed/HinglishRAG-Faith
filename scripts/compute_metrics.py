@@ -46,12 +46,14 @@ def main():
         has_hallucination = answer_labels.get(qid) != "fully_correct"
         correctly_flagged = any(c["flagged"] and c["true_hallucinated"] for c in claims)
         any_flag_raised = any(c["flagged"] for c in claims)
+        has_any_true_hallucinated_claim = any(c["true_hallucinated"] for c in claims)
         answers.append(
             {
                 "question_id": qid,
                 "has_hallucination": has_hallucination,
                 "flagged": correctly_flagged,
                 "any_flag_raised": any_flag_raised,
+                "has_any_true_hallucinated_claim": has_any_true_hallucinated_claim,
             }
         )
 
@@ -70,6 +72,14 @@ def main():
     n_total = len(verdicts)
     n_hallucinated = sum(true_flags)
     n_not = n_total - n_hallucinated
+
+    n_not_fully_correct = sum(1 for a in answers if a["has_hallucination"])
+    n_zero_false_claim_answers = sum(
+        1
+        for a in answers
+        if a["has_hallucination"] and not a["has_any_true_hallucinated_claim"]
+    )
+    n_fully_correct = len(correct_answers)
 
     report = f"""# Verification Layer Results
 
@@ -97,19 +107,20 @@ unsupported individual statement), {n_not} were not.
 | Strict — verifier flagged a claim that IS a true hallucination | {catch_rate_strict:.2f} |
 | Loose — verifier flagged *any* claim in the answer, correct or not | {catch_rate_loose:.2f} |
 
-18 of 60 answers are ground-truth not-fully-correct (partially or fully hallucinated, per
-`eval/labels.csv`). The gap between strict and loose above matters: loose counts an answer as
-"caught" even if the verifier flagged an unrelated claim for the wrong reason while missing the
-actual problem — see ADR-014 for why 7 of the 18 flagged answers have zero individually-false
-claims at all (the problem was relevance/completeness, not a false statement), which the strict
-number correctly treats as *not* catchable by a claim-level verifier.
+{n_not_fully_correct} of {len(answers)} answers are ground-truth not-fully-correct (partially or
+fully hallucinated, per `eval/labels.csv`). The gap between strict and loose above matters: loose
+counts an answer as "caught" even if the verifier flagged an unrelated claim for the wrong reason
+while missing the actual problem — see ADR-014 for why {n_zero_false_claim_answers} of the
+{n_not_fully_correct} flagged answers have zero individually-false claims at all (the problem was
+relevance/completeness, not a false statement), which the strict number correctly treats as *not*
+catchable by a claim-level verifier.
 
 ## False alarm rate on correct answers
 
-{false_alarms} of 42 fully_correct answers had at least one claim flagged (CONTRADICTED or
-UNVERIFIABLE) despite the answer being ground-truth correct — a false-alarm rate of
-{false_alarms/42:.2f}. Not one of the blueprint's named metrics, but relevant to precision: it's
-the direct source of false positives.
+{false_alarms} of {n_fully_correct} fully_correct answers had at least one claim flagged
+(CONTRADICTED or UNVERIFIABLE) despite the answer being ground-truth correct — a false-alarm rate
+of {false_alarms/n_fully_correct:.2f}. Not one of the blueprint's named metrics, but relevant to
+precision: it's the direct source of false positives.
 """
 
     Path(OUTPUT).write_text(report, encoding="utf-8")

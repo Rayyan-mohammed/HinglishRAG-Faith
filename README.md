@@ -90,9 +90,12 @@ docs/           planning docs, decision log, contracts, per-phase notes, error a
 ## Results
 
 60 questions, 244 decomposed claims, 17 ground-truth hallucinated (claim-level). Every one of
-the 18 non-fully_correct answers reaches the plain (unverified) baseline unflagged — the verified
-pipeline's whole value is in the columns below. Ground truth is an AI-drafted first pass, pending
-human review (ADR-012, ADR-014) — read `docs/report_evaluation_and_results.md` before quoting
+the 16 non-fully_correct answers reaches the plain (unverified) baseline unflagged — the verified
+pipeline's whole value is in the columns below. **The answer-level labels for these 16 flagged
+answers (plus 2 more that were reviewed and reclassified) are now human-reviewed** —
+`reviewed_by_human=TRUE` on 18 of 60 rows in `eval/labels.csv` (ADR-022); the other 42 rows
+(labeled `fully_correct` from the start) and the full claim-level `eval/claim_ground_truth.csv`
+remain the original AI-drafted pass. Read `docs/report_evaluation_and_results.md` before quoting
 these numbers anywhere.
 
 These are the numbers **after seven fixes across four rounds** (ADR-015, ADR-018, ADR-019/020,
@@ -116,9 +119,9 @@ simultaneous result recorded in this project.
 |---|---|
 | Recall on hallucinated claims | 0.71 |
 | Precision on flagged claims | 0.27 |
-| Answer-level catch rate (strict) | 0.39 |
-| Answer-level catch rate (loose) | 0.50 |
-| False-alarm rate on correct answers | 0.40 |
+| Answer-level catch rate (strict) | 0.44 |
+| Answer-level catch rate (loose) | 0.56 |
+| False-alarm rate on correct answers | 0.39 |
 
 ![Results chart](docs/figures/results_chart.png)
 
@@ -156,16 +159,17 @@ mid-project, a corrupted source PDF, non-deterministic verifier outputs, multipl
 self-correction on the error analysis, a shipped fix that regressed a headline metric, and an
 environment issue that blocked a diagnostic, among other things).
 
-**One item is deliberately not marked done, and isn't something this session can complete:**
-`eval/labels.csv` and `eval/claim_ground_truth.csv` — the ground truth every precision/recall
-number in this project rests on — are an AI-drafted first pass, `reviewed_by_human=FALSE` on
-every row (ADR-012, ADR-014). This was an explicit choice, not an oversight: the blueprint's own
-design (ADR-006) requires ground truth to come from a human specifically *because* the verifier
-being measured is also an LLM — if the ground truth were AI-written too, the precision/recall
-numbers would just measure two LLMs agreeing with each other, not real hallucination-catching
-ability. That review is the one piece of this project that has to happen outside this session.
-The 18 flagged answers (`label != fully_correct` in `eval/labels.csv`) are the highest-value
-subset to check first, since they drive every downstream metric.
+**Human review of the highest-value ground truth is now done (ADR-022).** The 18 flagged answers
+(`label != fully_correct`) in `eval/labels.csv` — the ones that drive every answer-level metric —
+have been reviewed by the user, one at a time, against the AI's original label and reasoning: 16
+confirmed as-is, 2 corrected (`partially_hallucinated` → `fully_correct`, both cases where the
+AI's own original notes had already flagged genuine ambiguity). `reviewed_by_human=TRUE` on those
+18 rows. This mattered per ADR-006's design requirement: ground truth has to come from a human
+specifically *because* the verifier being measured is also an LLM — an AI reviewing its own
+AI-drafted labels wouldn't have satisfied that, no matter how careful the review looked.
+**Still not reviewed, and lower priority:** the other 42 rows in `eval/labels.csv` (already
+labeled `fully_correct`, so they don't individually drive any reported metric), and all of
+`eval/claim_ground_truth.csv`'s claim-level labels — both remain the original AI-drafted pass.
 
 ## Status
 
@@ -280,8 +284,18 @@ and recall simultaneously recorded in this project's history, beating both the G
 result and the original pre-fix baseline. Answer-level catch rate moved the other way (strict
 0.44→0.39, loose 0.72→0.50), an expected side effect of precision improving — fewer false
 positives means fewer of the 18 flagged answers get an unrelated claim flagged by chance. Full
-account in ADR-021 (`docs/problems_and_decisions.md`); results above reflect this final, reported
-state.
+account in ADR-021 (`docs/problems_and_decisions.md`).
+
+Human review (ADR-022): the user reviewed all 18 flagged answers against the AI-drafted label and
+reasoning for each, one at a time — 16 confirmed, 2 corrected (Q26, Q40:
+`partially_hallucinated` → `fully_correct`, both cases the AI's own notes had already flagged as
+genuinely ambiguous). `reviewed_by_human=TRUE` on these 18 rows in `eval/labels.csv`. Also caught
+and fixed a second hardcoded-count bug in `scripts/compute_metrics.py` (`42`/`18`/`60` baked into
+the report template instead of computed from the actual label counts) while updating the numbers
+for the 2 label changes. Claim-level precision/recall are unchanged (0.27/0.71 — neither Q26 nor
+Q40 had a claim in `HALLUCINATED_MARKERS`); answer-level catch rate and false-alarm rate improved
+slightly from correcting the denominator, not from any verifier change. Results above reflect
+this final state.
 
 See [`docs/problems_and_decisions.md`](docs/problems_and_decisions.md) for the running decision
 log.

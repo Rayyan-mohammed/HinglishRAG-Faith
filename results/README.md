@@ -40,4 +40,9 @@ repo, not just asserted in prose.
 0.27, recall 0.71, false positives 32, false negatives 5) are the best precision and recall
 simultaneously recorded anywhere in this project's history, and are reported throughout the docs.
 
+**`metrics.md`'s answer-level numbers (strict/loose catch rate, false-alarm rate) reflect
+human-reviewed ground truth (ADR-022)** — the 18 answer-level labels driving those numbers were
+reviewed by the user, correcting 2 of 18 and moving strict catch rate 0.39→0.44, loose 0.50→0.56,
+false-alarm rate 0.40→0.39. Claim-level precision/recall are unaffected by that review.
+
 These are deliverables, not scratch output — commit them once they're produced, don't gitignore.

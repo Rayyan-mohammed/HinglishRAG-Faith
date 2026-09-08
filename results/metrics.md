@@ -21,19 +21,20 @@ unsupported individual statement), 227 were not.
 
 | Definition | Value |
 |---|---|
-| Strict — verifier flagged a claim that IS a true hallucination | 0.39 |
-| Loose — verifier flagged *any* claim in the answer, correct or not | 0.50 |
+| Strict — verifier flagged a claim that IS a true hallucination | 0.44 |
+| Loose — verifier flagged *any* claim in the answer, correct or not | 0.56 |
 
-18 of 60 answers are ground-truth not-fully-correct (partially or fully hallucinated, per
-`eval/labels.csv`). The gap between strict and loose above matters: loose counts an answer as
-"caught" even if the verifier flagged an unrelated claim for the wrong reason while missing the
-actual problem — see ADR-014 for why 7 of the 18 flagged answers have zero individually-false
-claims at all (the problem was relevance/completeness, not a false statement), which the strict
-number correctly treats as *not* catchable by a claim-level verifier.
+16 of 60 answers are ground-truth not-fully-correct (partially or
+fully hallucinated, per `eval/labels.csv`). The gap between strict and loose above matters: loose
+counts an answer as "caught" even if the verifier flagged an unrelated claim for the wrong reason
+while missing the actual problem — see ADR-014 for why 5 of the
+16 flagged answers have zero individually-false claims at all (the problem was
+relevance/completeness, not a false statement), which the strict number correctly treats as *not*
+catchable by a claim-level verifier.
 
 ## False alarm rate on correct answers
 
-17 of 42 fully_correct answers had at least one claim flagged (CONTRADICTED or
-UNVERIFIABLE) despite the answer being ground-truth correct — a false-alarm rate of
-0.40. Not one of the blueprint's named metrics, but relevant to precision: it's
-the direct source of false positives.
+17 of 44 fully_correct answers had at least one claim flagged
+(CONTRADICTED or UNVERIFIABLE) despite the answer being ground-truth correct — a false-alarm rate
+of 0.39. Not one of the blueprint's named metrics, but relevant to
+precision: it's the direct source of false positives.

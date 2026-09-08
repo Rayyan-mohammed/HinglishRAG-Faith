@@ -91,12 +91,13 @@ Runs entirely on free tools — no GPU, no paid API, no institutional compute.
 - **60 hand-written Hinglish questions**, 15 per scheme, 4 categories each (eligibility, deadline,
   amount, documents)
 - **Two-level ground truth**: answer-level (fully correct / partially / fully hallucinated) and
-  claim-level (209 decomposed claims, 24 ground-truth hallucinated)
+  claim-level (244 decomposed claims, 17 ground-truth hallucinated)
 - **Protocol**: build index → generate plain-RAG answers → label ground truth → run full verified
   pipeline → compute precision/recall → review a sample of mistakes
 
-Ground truth is an **AI-drafted first pass, disclosed as pending human review** — treated as
-provisional throughout.
+Ground truth started as an **AI-drafted first pass**. The 18 answer-level labels that drive every
+reported metric are now **human-reviewed** — the claim-level file and the other 42 answer-level
+rows remain the AI draft, treated as provisional.
 
 ---
 
@@ -112,9 +113,9 @@ provisional throughout.
 - **Best precision AND recall recorded simultaneously anywhere in this project** — beats every
   earlier state, including the very first pre-fix baseline (0.21/0.71)
 - **The baseline has a 0% catch rate by definition** — the plain pipeline would let every one of
-  the 18 non-fully-correct answers through completely unflagged
-- Answer-level strict catch rate is 0.39 in the final measured run — *lower* than earlier rounds
-  despite better precision/recall — see the third detour below for why
+  the 16 non-fully-correct answers through completely unflagged
+- Answer-level strict catch rate is 0.44 in the final, human-reviewed measurement — see the third
+  and fourth detours below for why it moved (down at first, then back up after review)
 - Numbers are samples, not fixed measurements — re-running verification on identical claim text
   still moved individual verdicts run to run (confirmed directly on Groq, not just suspected), and
   even claim decomposition itself isn't perfectly stable run to run on identical input
@@ -239,8 +240,36 @@ deduplicated. While diagnosing the regression, also found and fixed a real data-
 traced to the same malformed source PDF as an earlier data bug (P-007).
 
 **Result: precision 0.27, recall 0.71, false positives 32, false negatives 5** — better than every
-prior state on both axes at once. Answer-level catch rate went the other way (0.44 → 0.39) — an
-expected side effect: fewer false positives means fewer answers get a claim flagged "by accident."
+prior state on both axes at once. Answer-level catch rate went the other way at first (0.44 →
+0.39) — an expected side effect: fewer false positives means fewer answers get a claim flagged "by
+accident."
+
+---
+
+## Fourth detour: closing the ground-truth gap — human review, not another engineering fix
+
+The remaining open item wasn't a code problem. Per ADR-006, ground truth has to come from a human
+*specifically because* the verifier being measured is also an LLM — an AI reviewing its own
+AI-drafted labels wouldn't satisfy that, no matter how carefully it's done.
+
+The user reviewed all 18 non-`fully_correct` answers one at a time — question, generated answer,
+AI-drafted label and reasoning shown for each. **16 confirmed, 2 corrected**: Q26 and Q40 both
+moved `partially_hallucinated` → `fully_correct`. Both had already been flagged as genuinely
+ambiguous in the AI's own earlier notes — the review confirmed that self-doubt was warranted.
+
+Neither Q26 nor Q40 had a claim in the claim-level ground truth, so **claim-level precision/recall
+are completely unaffected (still 0.27/0.71)**. What changed is the answer-level denominator: 16
+non-fully_correct answers instead of 18.
+
+**Corrected result: strict catch rate 0.44, loose catch rate 0.56, false-alarm rate 0.39** — all
+three improved slightly, purely from the corrected count, not from any verifier change. Also
+caught a second hardcoded-count bug in `compute_metrics.py` in the process (the same class as an
+earlier one) — fixed to compute these numbers dynamically instead of baking them into the report
+template.
+
+`reviewed_by_human=TRUE` on these 18 rows. The other 42 answer-level rows and the full claim-level
+ground truth remain the disclosed AI-drafted pass — lower priority since they don't individually
+move any reported number.
 
 ---
 
@@ -261,6 +290,9 @@ expected side effect: fewer false positives means fewer answers get a claim flag
 - **Non-determinism, at two layers now**: the judge (confirmed directly — 12 of 20 verdict changes
   on identical evidence across two Groq runs; majority voting reduces but doesn't eliminate this)
   and, newly found, the LLM-based decomposer itself.
+- **Ground truth review is partial, not complete**: the 18 answer-level labels that drive every
+  reported metric are human-reviewed; the other 42 answer-level rows and the entire claim-level
+  ground truth file remain the original AI draft.
 
 ---
 
@@ -280,14 +312,17 @@ verification against its sources, not just internal consistency.
 
 ## Limitations, disclosed plainly
 
-- Single annotator (AI-drafted, not yet human-reviewed) for both ground-truth files
+- The 18 answer-level labels driving reported metrics are human-reviewed (16 confirmed, 2
+  corrected); the other 42 rows and the full claim-level ground truth remain AI-drafted
 - 60-question set — indicative for a course project, not a statistically powered benchmark
-- Generator and verifier share one model — self-verification bias never separately measured
-- Rule-based decomposition has known, documented failure modes on compound sentences
-- Retrieval and verification quality are still entangled for the right-scheme-but-incomplete
-  case — the relevance fix only resolves the clearly-wrong-scheme subset
-- One confirmed genuine LLM-judge misjudgment (Q42) — a reliability ceiling on the method itself,
-  not something any prompt change fixed
+- Generator, decomposer, and verifier share one model — self-verification bias never separately
+  measured
+- LLM-based decomposition fixed several rule-based failure modes but isn't itself perfectly
+  stable run-to-run on identical input
+- Retrieval and verification quality are substantially, but not fully, disentangled for the
+  right-scheme-but-incomplete case, and not at all for true-content-wrong-scheme attribution
+- One confirmed genuine LLM-judge misjudgment (Q42, found on Groq) — a reliability ceiling on the
+  method itself, not something any prompt change fixed
 
 ---
 

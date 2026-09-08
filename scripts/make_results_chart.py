@@ -13,9 +13,9 @@ OUTPUT = "docs/figures/results_chart.png"
 metrics = {
     "Precision\n(flagged claims)": 0.27,
     "Recall\n(hallucinated claims)": 0.71,
-    "Catch rate\n(strict)": 0.39,
-    "Catch rate\n(loose)": 0.50,
-    "False-alarm rate\n(correct answers)": 0.40,
+    "Catch rate\n(strict)": 0.44,
+    "Catch rate\n(loose)": 0.56,
+    "False-alarm rate\n(correct answers)": 0.39,
 }
 
 colors = ["#c0392b", "#27ae60", "#2980b9", "#5dade2", "#e67e22"]
@@ -34,7 +34,7 @@ for bar, value in zip(bars, metrics.values()):
 
 ax.set_ylim(0, 1.0)
 ax.set_ylabel("Score")
-ax.set_title("CodeSwitch-Verify — Verification Layer Results\n(60 questions, 244 claims, 17 ground-truth hallucinated — final, post ADR-021)")
+ax.set_title("CodeSwitch-Verify — Verification Layer Results\n(60 questions, 244 claims, 17 ground-truth hallucinated — final, post ADR-022, human-reviewed)")
 ax.axhline(0.5, color="gray", linewidth=0.5, linestyle="--")
 plt.xticks(rotation=0, fontsize=9)
 plt.tight_layout()
