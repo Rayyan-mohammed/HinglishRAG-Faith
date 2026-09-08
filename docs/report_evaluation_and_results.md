@@ -48,17 +48,18 @@ with generation randomness rather than isolating the effect of verification.
 
 ## Results
 
-These are the final, reported numbers — after four fixes across two rounds (ADR-015, then
-ADR-018's repair of a regression ADR-017 diagnosed in between), measured end-to-end on a fresh
-209-claim verification run against the corrected data and prompt.
+These are the final, reported numbers — after six fixes across three rounds (ADR-015, then
+ADR-018's repair of a regression ADR-017 diagnosed in between, then ADR-019/020's extended
+data-granularity fix and majority-vote judging), measured end-to-end on a fresh 209-claim
+verification run against the corrected data and prompt.
 
 | Metric | Value |
 |---|---|
-| Precision on flagged claims | 0.24 |
+| Precision on flagged claims | 0.25 |
 | Recall on hallucinated claims | 0.67 |
-| Answer-level catch rate (strict) | 0.50 |
-| Answer-level catch rate (loose) | 0.78 |
-| False-alarm rate on correct answers | 0.50 |
+| Answer-level catch rate (strict) | 0.44 |
+| Answer-level catch rate (loose) | 0.72 |
+| False-alarm rate on correct answers | 0.48 |
 
 Full breakdown (TP/FP/FN counts) in `results/metrics.md`.
 
@@ -71,24 +72,34 @@ since wrong-scheme evidence always looks silent on the claim's real topic. Rathe
 that fix — which would have erased the regression but also its real benefit, without touching the
 underlying retrieval problem — it was repaired: the same instruction now checks whether the
 evidence is even about the claim's scheme before trusting its silence (ADR-018), verified
-directly against the actual failing case before the full re-run. Final result: **precision 0.24
-and false-alarm rate 0.50 both beat the original pre-fix numbers**, false positives dropped from
-65 to 50, and recall recovered to 0.67 — within 4 points of where the project started, not fully
-back, because the relevance check only catches evidence that's clearly *off-topic*, not evidence
-from the *right* scheme that's merely incomplete (a distinct, still-open cause — see
-`docs/error_analysis.md`).
+directly against the actual failing case before the full re-run. That round landed at precision
+0.24 and false-alarm rate 0.50, both beating the original pre-fix numbers, false positives dropped
+from 65 to 50, and recall recovered to 0.67 — within 4 points of where the project started.
 
-**What's still open, named rather than hand-waved:** two false-negative causes remain
-unaddressed by any of the four fixes — right-scheme-but-incomplete retrieval (extending ADR-015's
-row-splitting treatment beyond the one Post-Matric Scholarship row it covered would likely help),
-and one confirmed case (Q42) where the LLM-judge had the fully correct evidence and still ruled
-wrong — a genuine reliability limit of the method itself, not an engineering gap.
+**A second round (ADR-019/020) landed roughly flat, not a further win.** Extending the
+row-splitting fix to PM-KISAN's and PM Awas Yojana's remaining oversized rows, then measuring it,
+surfaced a more important finding: the LLM judge isn't fully deterministic even at
+`temperature=0` — direct proof came from finding that 12 of 20 verdict changes between two runs
+had byte-identical evidence text. Majority-vote judging (3 judge calls per claim, majority wins)
+was added to address that noise. The combined result: precision 0.25 and false-alarm rate 0.48
+(both marginally better), recall unchanged at 0.67, but answer-level catch rate slightly *worse*
+(strict 0.50→0.44) despite an identical true/false-negative count — the same total catches landed
+on one fewer unique answer. Reported as a wash, kept for the underlying engineering soundness
+(better data granularity, less reliance on a single judge sample) rather than a demonstrated score
+gain — see `docs/problems_and_decisions.md` ADR-019/ADR-020 for the full mechanism.
+
+**What's still open, named rather than hand-waved:** false negatives now trace mostly to
+retrieval picking an ambiguous or wrong scheme's evidence for claims that don't name a scheme
+explicitly (Q2/Q3/Q43/Q44 — extending row-splitting further didn't reach these, since none trace
+to an oversized row), decomposition bundling or dropping qualifiers (Q10/Q51), and one confirmed
+case (Q42) where the LLM-judge had the fully correct evidence and still ruled wrong — a genuine
+reliability limit of the method itself, not an engineering gap.
 
 **Comparison to the plain (unverified) baseline still holds regardless:** every one of the 18
 non-fully_correct answers would reach the user completely unflagged under the plain pipeline — a
-0% catch rate on anything, by definition. The verified pipeline catches half of those answers
-(0.50 strict catch rate) while now also being more precise and less prone to false alarms than
-where this project started.
+0% catch rate on anything, by definition. The verified pipeline still catches a substantial share
+of those answers (0.44 strict catch rate) while remaining more precise and less prone to false
+alarms than where this project started.
 
 ## Limitations
 

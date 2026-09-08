@@ -95,23 +95,27 @@ pipeline's whole value is in the columns below. Ground truth is an AI-drafted fi
 human review (ADR-012, ADR-014) — read `docs/report_evaluation_and_results.md` before quoting
 these numbers anywhere.
 
-These are the numbers **after four fixes across two rounds** (ADR-015, then ADR-018): splitting
-an oversized knowledge-base row, filtering out degenerate decomposition fragments, and adding
-explicit verifier-prompt handling for claims that describe an absence of information — which
-initially, verified correct in isolation, still **regressed recall (0.71→0.42)** once retrieval
-(deliberately left unfixed — a real question isn't pre-labeled with its scheme) fed it
-wrong-scheme evidence (ADR-017). Rather than reverting, the same instruction was repaired to
-check topical relevance before trusting an absence reading (ADR-018), verified against the real
-failing case first. Net result: **better than the original on precision, false positives, and
-false-alarm rate**, with recall recovered to within 4 points of where the project started.
+These are the numbers **after six fixes across three rounds** (ADR-015, ADR-018, then
+ADR-019/020): splitting oversized knowledge-base rows (across two rounds — Post-Matric
+Scholarship first, then PM-KISAN and PM Awas Yojana's remaining offenders), filtering out
+degenerate decomposition fragments, adding explicit verifier-prompt handling for claims that
+describe an absence of information, and majority-vote judging (3 independent LLM-judge calls per
+claim) to reduce measured-score noise from a confirmed non-deterministic judge. The absence-claim
+fix initially, verified correct in isolation, still **regressed recall (0.71→0.42)** once
+retrieval (deliberately left unfixed — a real question isn't pre-labeled with its scheme) fed it
+wrong-scheme evidence (ADR-017); rather than reverting, the same instruction was repaired to check
+topical relevance before trusting an absence reading (ADR-018), recovering to precision 0.24 /
+recall 0.67. Extending the row-splitting fix and adding majority-vote judging (ADR-019/020) left
+claim-level precision/recall essentially flat (0.25/0.67) — a wash, not a further win, disclosed
+plainly rather than framed as progress it didn't make.
 
 | Metric | Value |
 |---|---|
 | Recall on hallucinated claims | 0.67 |
-| Precision on flagged claims | 0.24 |
-| Answer-level catch rate (strict) | 0.50 |
-| Answer-level catch rate (loose) | 0.78 |
-| False-alarm rate on correct answers | 0.50 |
+| Precision on flagged claims | 0.25 |
+| Answer-level catch rate (strict) | 0.44 |
+| Answer-level catch rate (loose) | 0.72 |
+| False-alarm rate on correct answers | 0.48 |
 
 ![Results chart](docs/figures/results_chart.png)
 
@@ -130,10 +134,13 @@ specifically got missed or over-flagged, and the full regression story is in
 
 ## Project status
 
-**All 24 tasks across both tracks and all 4 weeks are done**, plus a post-submission fix cycle
-that shipped four fixes, hit a real regression along the way, diagnosed it precisely instead of
-guessing, and repaired it rather than reverting — landing better than the original baseline on
-precision, false positives, and false-alarm rate (ADR-015/017/018 — see Status log below).
+**All 24 tasks across both tracks and all 4 weeks are done**, plus two post-submission fix cycles
+that together shipped six fixes, hit a real regression along the way, diagnosed it precisely
+instead of guessing, repaired it rather than reverting, then discovered the LLM judge itself isn't
+fully deterministic and added majority-vote judging to address that directly (ADR-015 through
+ADR-020 — see Status log below). The second cycle landed roughly flat on claim-level
+precision/recall relative to the first — reported honestly as a wash, not spun as further
+progress.
 Verified, not assumed: full test suite passes (`uv run python -m pytest`, 16 tests), and the
 complete pipeline was run live
 end-to-end (retrieval → Hinglish generation → decomposition → per-claim verification) as a final
@@ -227,11 +234,28 @@ retrieval diagnostic was built to isolate the effect but didn't finish (blocked 
 Windows Application Control policy on native DLLs, an environment issue) — turned out not to be
 needed. **Fixed, not reverted (ADR-018):** added a relevance check to the same instruction —
 verify the evidence is about the claim's scheme before trusting its silence — verified directly
-against the real failing case, then re-measured end-to-end. **Final result: precision 0.24,
+against the real failing case, then re-measured end-to-end. **Result: precision 0.24,
 recall 0.67, false positives 65→50, false-alarm rate 0.57→0.50** — better than the original
 pre-fix baseline on precision, false positives, and false-alarm rate, with recall recovered to
 within 4 points of where the project started. Full account in ADR-017/ADR-018
-(`docs/problems_and_decisions.md`); results above reflect this final, reported state.
+(`docs/problems_and_decisions.md`).
+
+Second post-submission fix cycle (ADR-019/020): extended the row-splitting fix to PM-KISAN's and
+PM Awas Yojana's remaining oversized rows (dataset grew from 183 to 197 atomic facts), then, while
+measuring that change, found direct proof the LLM judge isn't fully deterministic even at
+`temperature=0` — 12 of 20 verdict flips between two runs had byte-identical evidence text, so the
+same claim against the same evidence produced a different verdict purely from re-running the
+judge. That meant the row-split's own before/after comparison was mostly noise, not a real signal
+either way. Added majority-vote judging (`verify_claim()` now takes the majority of 3 independent
+judge calls, ADR-020) to address the noise directly — feasible cost-wise only because of ADR-016's
+multi-key failover, and even then the 3x API cost repeatedly hit Groq's daily quota, spreading the
+full 209-claim re-verification across two days and several resume cycles. **Final result:
+precision 0.25, recall 0.67, false positives 49, false-alarm rate 0.48** — claim-level numbers
+essentially flat versus ADR-018, though answer-level catch rate dipped slightly (strict 0.50→0.44,
+loose 0.78→0.72) despite identical true/false-negative counts, because which specific claims got
+caught shifted between runs. Reported as a wash, not a further improvement — full account in
+ADR-019/ADR-020 (`docs/problems_and_decisions.md`); results above reflect this final, reported
+state.
 
 See [`docs/problems_and_decisions.md`](docs/problems_and_decisions.md) for the running decision
 log.

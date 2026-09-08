@@ -2,15 +2,49 @@
 
 Reviews the verifier's mistakes against `eval/claim_ground_truth.csv`, computed by
 `scripts/compute_metrics.py` into `results/metrics.md`. **Current, final, reported numbers**
-(after ADR-015's fixes, ADR-017's diagnosed regression, and ADR-018's relevance-aware repair):
-precision 0.24, recall 0.67, strict answer-level catch rate 0.50, false-alarm rate 0.50.
+(after ADR-015/017/018's fix-and-repair cycle, then ADR-019's data-granularity extension and
+ADR-020's majority-vote judging): precision 0.25, recall 0.67, strict answer-level catch rate
+0.44, false-alarm rate 0.48.
 
-**Read this document in three layers**, in this order: (1) this summary, the final state; (2)
-ADR-017's regression story, kept because it explains a real mechanism worth understanding even
-though it's no longer the reported number; (3) the pre-fix diagnosis below that, kept because
-it's still an accurate description of *why* the original problems happened.
+**Read this document in four layers**, in this order: (1) this summary, the final state; (2) the
+ADR-015→018 cycle immediately below, which is where the numbers actually moved; (3) ADR-017's
+regression story, kept because it explains a real mechanism worth understanding even though it's
+no longer the reported number; (4) the pre-fix diagnosis at the bottom, kept because it's still an
+accurate description of *why* the original problems happened.
 
-## The final state: four fixes, measured end-to-end (ADR-015 → ADR-017 → ADR-018)
+## Round 3 (ADR-019/020): extended data-granularity fix + majority-vote judging — a wash, not a further win
+
+After the ADR-018 state below, two more changes went in: splitting PM-KISAN's and PM Awas
+Yojana's remaining oversized rows (183→197 facts, ADR-019), and majority-vote judging — 3
+independent judge calls per claim, majority wins (ADR-020). The second change exists *because* of
+what was found investigating the first: diffing two full runs' verdicts found 12 of 20 flips had
+byte-identical evidence text, direct proof the judge isn't fully deterministic even at
+`temperature=0`. That made the row-split's own single-run before/after comparison unreliable —
+most of its apparent effect was judge noise, not the data change.
+
+| Metric | ADR-018 (round 2) | Round 3 (ADR-019+020) |
+|---|---|---|
+| Precision | 0.24 | 0.25 |
+| Recall | 0.67 | 0.67 |
+| True positives | 16 | 16 |
+| False positives | 50 | 49 |
+| False negatives | 8 | 8 |
+| Strict answer-level catch rate | 0.50 | 0.44 |
+| Loose answer-level catch rate | 0.78 | 0.72 |
+| False-alarm rate | 0.50 | 0.48 |
+
+Claim-level numbers are flat to marginally better. Answer-level catch rate is measurably *worse*
+despite identical tp/fn counts — diagnosed by checking which of the 18 not-fully-correct answers
+had a hallucination caught in each run: the same *total* number of true positives landed on a
+different subset of answers, covering one fewer answer at the strict level even though nothing
+about total catch count changed. This is reported plainly as a wash rather than framed as further
+progress — see ADR-020 for the full reasoning on why the data split and majority voting were kept
+anyway (sound engineering on their own terms, even without a demonstrated score gain on this one
+run).
+
+---
+
+## Round 2 (ADR-015 → ADR-017 → ADR-018): four fixes, measured end-to-end
 
 Four changes went in, across two rounds: (1) decomposition fragment filter, (2) splitting
 Post-Matric Scholarship's oversized row into 12 atomic facts, (3) an absence-claim prompt
@@ -172,9 +206,11 @@ Full breakdown in P-006 and P-008 (`docs/problems_and_decisions.md`).
 
 ## False negatives (8 of 24 true hallucinations, final state) — what got missed
 
-Count has moved 7→14→8 across the three rounds (P-008 → ADR-015 → ADR-018) — partly real fixes,
-partly the project's documented run-to-run non-determinism (P-008). The current 8, reviewed
-individually:
+Count has moved 7→14→8→8 across the four rounds (P-008 → ADR-015 → ADR-018 → ADR-019/020) — partly
+real fixes, partly the project's documented run-to-run non-determinism (P-008, quantified further
+in ADR-019). The count held steady at 8 between round 2 and round 3, but the *specific* claims
+shifted: Q49 (below) is now correctly caught, replaced by Q44, a new instance of the same
+right-scheme-ambiguous pattern as Q2/Q3/Q43. The current 8, reviewed individually:
 
 | Question | Claim (truncated) | Verdict (confidence) | Why it was missed |
 |---|---|---|---|
@@ -182,26 +218,35 @@ individually:
 | 3 | "...clearly nahi likha hai ki government employee..." | SUPPORTED (0.95) | Same pattern as Q2 — no scheme named in the claim, evidence is genuinely PM-KISAN (right scheme) but the specific exclusion-criteria fact wasn't retrieved. ADR-018's relevance check doesn't help when the scheme is already right; this is the retrieval-completeness problem (P-008), not a relevance problem. |
 | 10 | "...amount same hai sabhi states..." | SUPPORTED (0.97) | **Bundled claim.** A verifiable fact (Rs 6000/year, Rs 2000 x3) and an unverifiable generalization ("same across all states") got decomposed into one claim, not two. The judge anchored on the strongly-supported numeric part and didn't separately scrutinize the generalization. Not a retrieval or relevance issue — a decomposition granularity issue. |
 | 30 | "...Driving Licence, Voters' ID Card, NREGA Job Card..." | SUPPORTED (0.97) | **True fact, wrong scheme, evidence mix.** This content is genuinely PM-KISAN's document list, correctly judged true against the PM-KISAN passage in its evidence — but the answer presents it as Ayushman Bharat's list. The verifier checks claim-vs-evidence, not claim-vs-question-scheme, so a true fact copied from the wrong scheme's answer still verifies as supported. |
-| 43 | "...koi jankari nahi hai" (re: income certificate authority) | SUPPORTED (0.95) | Same pattern as Q2/Q3 — right scheme (Post-Matric Scholarship) evidence retrieved, but not the specific sentence naming the issuing authority. ADR-018 doesn't help here since the evidence isn't off-topic, just incomplete. |
-| 49 | "Is scheme mein do models hain..." | SUPPORTED (0.99) | **Scope mismatch, not a factual error.** "Do models" (public/private) is true of the AHP vertical specifically — real, on-topic evidence supports it. The claim's actual problem is that it describes "the scheme" as a whole (which has 4 verticals: ISSR/CLSS/AHP/BLC), a document-structure fact the verifier has no visibility into regardless of how relevant the evidence is. |
-| 51 | "Diye gaye context me sirf PM-KISAN" / "...Post-Matric Scholarship ke bare me jankari hai" | SUPPORTED (0.95 / 0.96) | **Decomposition lost the exhaustiveness qualifier.** The original claim was "context has *only* PM-KISAN and Post-Matric Scholarship info" — false, since PM Awas Yojana facts also exist. Splitting it into "has PM-KISAN info" + "has Post-Matric info" produces two individually-true fragments, silently dropping the "only" that made the combined claim false. |
+| 43 | "...koi jankari nahi hai" (re: income certificate authority) | SUPPORTED (0.85) | Same pattern as Q2/Q3 — right scheme (Post-Matric Scholarship) evidence retrieved, but not the specific sentence naming the issuing authority. ADR-018 doesn't help here since the evidence isn't off-topic, just incomplete. |
+| 44 | "Nahin, caste certificate submit karna mandatory nahin hai" | SUPPORTED (0.80) | **New in round 3 — same right-scheme-ambiguous pattern as Q2/Q3/Q43.** Claim doesn't name a scheme; retrieved evidence is PM-KISAN's document-requirements passage (Aadhaar, category, etc.), which never mentions caste certificates — genuinely silent, but on the *wrong* scheme (the claim is really about a caste-certificate scheme like Post-Matric Scholarship). ADR-018's relevance check doesn't trigger because the evidence isn't obviously "about something else" — it's topically adjacent (document requirements, just for a different scheme). Row-splitting (ADR-019) didn't touch this either, since the problem is retrieval picking the wrong scheme's document list, not an oversized row. |
+| 51 | "Diye gaye context me sirf PM-KISAN" / "...Post-Matric Scholarship ke bare me jankari hai" | SUPPORTED (0.95 / 0.97) | **Decomposition lost the exhaustiveness qualifier.** The original claim was "context has *only* PM-KISAN and Post-Matric Scholarship info" — false, since PM Awas Yojana facts also exist. Splitting it into "has PM-KISAN info" + "has Post-Matric info" produces two individually-true fragments, silently dropping the "only" that made the combined claim false. |
 
-Five distinct mechanisms survive after ADR-018, none of them fixed by the relevance-aware prompt
-because none of them involve evidence that's *clearly off-topic* — that specific pattern (Q57's
-old false negative) is the one ADR-018 actually fixed: (a) compound claims mixing a true fact
-with an unverifiable generalization (Q10); (b) true-content-wrong-scheme cases where a fact is
-genuine but attributed to the wrong answer (Q30); (c) decomposition dropping a qualifier word
-when splitting compound sentences (Q51); (d) the judge accepting a false "the source is silent on
-this" claim when the *right* scheme's evidence is retrieved but incomplete, not wrong (Q2, Q3,
-Q43) — a narrower, harder version of the absence-claim problem than ADR-018 targeted; (e) a
-document-structure fact (which vertical vs. the whole scheme) the verifier has no way to
-represent (Q49). (b) and (d)'s "right scheme, wrong specific fact" cases share a root cause with
-P-008's oversized-fact-row finding — more of `data/schemes/*.csv` likely needs the same
-granularity treatment ADR-015 gave Post-Matric Scholarship's worst row alone.
+Q49 ("Is scheme mein do models hain...", the round-2 scope-mismatch case) is no longer a false
+negative as of round 3 — the judge now correctly flags it, likely the same run-to-run instability
+already documented rather than a targeted fix (nothing in ADR-019/020 specifically addresses
+document-structure scope mismatches).
 
-## What was actually done, and what's genuinely still open (post ADR-015/017/018)
+Five distinct mechanisms survive after ADR-018/020, none of them fixed by the relevance-aware
+prompt or majority voting because none of them involve evidence that's *clearly off-topic* in a
+way a single judge call can already detect — that specific pattern (Q57's old false negative) is
+the one ADR-018 actually fixed: (a) compound claims mixing a true fact with an unverifiable
+generalization (Q10); (b) true-content-wrong-scheme cases where a fact is genuine but attributed
+to the wrong answer (Q30); (c) decomposition dropping a qualifier word when splitting compound
+sentences (Q51); (d) the judge accepting a false "the source is silent on this" claim when
+evidence from an *ambiguous or wrong* scheme is retrieved but doesn't look obviously off-topic
+(Q2, Q3, Q43, Q44) — a narrower, harder version of the absence-claim problem than ADR-018 targeted;
+(e) a document-structure fact (which vertical vs. the whole scheme) the verifier has no way to
+represent (Q49, round 2 only). (b) and (d)'s "wrong or incomplete scheme evidence" cases share a
+root cause with P-008's oversized-fact-row finding and ADR-019's data-granularity work — evidently
+extending row-splitting to more of `data/schemes/*.csv` (ADR-019 covered PM-KISAN and PM Awas
+Yojana's worst rows) didn't reach these specific cases, since none of them trace to an oversized
+row — the problem here is retrieval choosing the wrong scheme's evidence outright, not a diluted
+embedding within the right scheme's data.
 
-Of the list this section used to propose, four items are now done and measured, and two remain
+## What was actually done, and what's genuinely still open (post ADR-015/017/018/019/020)
+
+Of the list this section used to propose, six items are now done and measured, and two remain
 open as the real next steps:
 
 1. **Done — fact-granularity fix.** Post-Matric Scholarship's oversized row split into 12 atomic
@@ -233,11 +278,24 @@ open as the real next steps:
    a bug.
 6. **Lower priority, not attempted:** the compound-claim and dropped-qualifier decomposition
    issues (Q10, Q51) affect a handful of claims — real, but smaller than the others.
+7. **Done — extended data-granularity fix.** PM-KISAN's and PM Awas Yojana's remaining oversized
+   rows split into 18 more atomic facts (`scripts/split_more_oversized_rows.py`, ADR-019).
+   Confirmed it doesn't fix Q2/Q3/Q44's specific false negatives (checked first — those facts live
+   in already-reasonably-sized rows), pursued anyway as a general data-quality improvement.
+8. **Done — majority-vote judging.** `verify_claim()` now takes the majority of 3 independent
+   judge calls (ADR-020), added after directly proving the judge isn't fully deterministic even at
+   `temperature=0`. Net effect on this run: a wash at the claim level, a small dip at the answer
+   level — disclosed plainly in the round-3 section above, not framed as a win it didn't
+   demonstrate.
 
-The honest summary: four fixes shipped. Three were unambiguously net-positive. The fourth
-regressed a headline metric on first release, was diagnosed precisely rather than guessed at, and
-was repaired — not reverted — once the mechanism was understood, landing better than where the
-project started on precision, false positives, and false-alarm rate, with recall recovered to
-within 4 points of the original. What's left open is bounded and named, not hand-waved: retrieval
-completeness on right-scheme-but-incomplete evidence, and one confirmed case where the method
-itself, not the engineering around it, is the limit.
+The honest summary: six fixes shipped across two post-submission cycles. Three of the first four
+were unambiguously net-positive; the fourth regressed a headline metric on first release, was
+diagnosed precisely rather than guessed at, and was repaired — not reverted — landing better than
+where the project started on precision, false positives, and false-alarm rate, with recall
+recovered to within 4 points of the original. The second cycle (extended data-granularity fix +
+majority-vote judging) is reported as a wash relative to that point, not further progress — kept
+for sound engineering reasons (better data, less judge-sampling reliance) rather than a
+demonstrated score gain. What's left open is bounded and named, not hand-waved: retrieval
+correctly identifying the scheme for claims that don't name one (Q2/Q3/Q43/Q44), decomposition
+losing qualifiers or bundling claims (Q10/Q51), and one confirmed case where the method itself,
+not the engineering around it, is the limit (Q42).

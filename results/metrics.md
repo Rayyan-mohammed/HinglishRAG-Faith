@@ -8,10 +8,10 @@ truths: `eval/claim_ground_truth.csv` (claim-level, derived per ADR-014) and `ev
 
 | Metric | Value |
 |---|---|
-| Precision on flagged claims | 0.24 |
+| Precision on flagged claims | 0.25 |
 | Recall on hallucinated claims | 0.67 |
 | True positives | 16 |
-| False positives | 50 |
+| False positives | 49 |
 | False negatives | 8 |
 
 Of 209 total claims, 24 were ground-truth hallucinated (a false or
@@ -21,8 +21,8 @@ unsupported individual statement), 185 were not.
 
 | Definition | Value |
 |---|---|
-| Strict — verifier flagged a claim that IS a true hallucination | 0.50 |
-| Loose — verifier flagged *any* claim in the answer, correct or not | 0.78 |
+| Strict — verifier flagged a claim that IS a true hallucination | 0.44 |
+| Loose — verifier flagged *any* claim in the answer, correct or not | 0.72 |
 
 18 of 60 answers are ground-truth not-fully-correct (partially or fully hallucinated, per
 `eval/labels.csv`). The gap between strict and loose above matters: loose counts an answer as
@@ -33,7 +33,7 @@ number correctly treats as *not* catchable by a claim-level verifier.
 
 ## False alarm rate on correct answers
 
-21 of 42 fully_correct answers had at least one claim flagged (CONTRADICTED or
+20 of 42 fully_correct answers had at least one claim flagged (CONTRADICTED or
 UNVERIFIABLE) despite the answer being ground-truth correct — a false-alarm rate of
-0.50. Not one of the blueprint's named metrics, but relevant to precision: it's
+0.48. Not one of the blueprint's named metrics, but relevant to precision: it's
 the direct source of false positives.

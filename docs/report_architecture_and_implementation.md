@@ -197,10 +197,24 @@ story rather than duplicated:
   then `pandas`) — an environment problem, not a code one. Repaired rather than reverted: added
   one precondition to the same instruction — check the evidence is about the claim's scheme
   before trusting its silence — verified against the actual failing case, then re-measured
-  end-to-end. **Final: precision 0.24, recall 0.67, false positives 65→50, false-alarm rate
+  end-to-end. **Result: precision 0.24, recall 0.67, false positives 65→50, false-alarm rate
   0.57→0.50** — better than the original on three of four axes, with recall recovered to within
   4 points of it. The scheme-filtered diagnostic turned out unnecessary once this smaller,
   targeted fix answered the underlying question directly.
+- **ADR-019 / ADR-020** — a second post-submission cycle. Extended the row-splitting fix to
+  PM-KISAN's and PM Awas Yojana's remaining oversized rows (183→197 facts), then measuring it
+  produced direct proof the judge isn't fully deterministic even at `temperature=0` (12 of 20
+  verdict changes between two runs had byte-identical evidence text). Added majority-vote judging
+  (`verify_claim()` now takes the majority of 3 independent judge calls) to address that noise.
+  **Final: precision 0.25, recall 0.67, false positives 49, false-alarm rate 0.48** — claim-level
+  numbers roughly flat versus the ADR-018 state (a wash, not a further win), with answer-level
+  catch rate slightly lower (0.50→0.44) despite an identical true/false-negative count, because
+  the specific claims caught shifted between runs. Reported plainly rather than framed as
+  progress it didn't demonstrate — kept for the underlying engineering soundness, not a score
+  claim. Getting one full majority-voted run measured took two calendar days and several resume
+  cycles, hitting both Groq's daily quota (majority voting triples API cost) and a low-free-RAM
+  DLL failure loading the embedding model — both survived by the existing resumable-script
+  design, no new code needed.
 - **P-007** — a malformed source PDF silently corrupted two figures in the scraped knowledge base;
   caught by chance during manual testing, which is itself evidence that the scraped-not-authored
   knowledge base needed (and didn't get, beyond one spot-check) systematic verification against

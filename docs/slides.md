@@ -108,14 +108,16 @@ provisional throughout.
 
 ## Reading the results honestly
 
-- **Precision 0.24, recall 0.67** — the final, reported numbers, after a detour (next slides)
-- **Beats the original pre-fix baseline** on precision (0.24 vs 0.21), false positives (50 vs 65),
-  and false-alarm rate (0.50 vs 0.57); recall recovered to within 4 points of it (0.67 vs 0.71)
+- **Precision 0.25, recall 0.67** — the final, reported numbers, after two detours (next slides)
+- **Beats the original pre-fix baseline** on precision (0.25 vs 0.21), false positives (49 vs 65),
+  and false-alarm rate (0.48 vs 0.57); recall recovered to within 4 points of it (0.67 vs 0.71)
 - **The baseline has a 0% catch rate by definition** — the plain pipeline would let every one of
   the 18 non-fully-correct answers through completely unflagged
-- The answer-level strict catch rate holds at 0.50 throughout every version of this pipeline
+- Answer-level strict catch rate is 0.44 in the final measured run — see the second detour below
+  for why this moved even though claim-level precision/recall didn't get worse
 - Numbers are samples, not fixed measurements — re-running on identical claim text at
-  `temperature=0` still moves individual verdicts run to run
+  `temperature=0` still moves individual verdicts run to run (confirmed directly, not just
+  suspected — see below)
 
 ---
 
@@ -201,16 +203,34 @@ false positives, and false-alarm rate; recall recovered to within 4 points of th
 
 ---
 
+## Second detour: extending the data fix surfaced a bigger problem
+
+Extended row-splitting to PM-KISAN's and PM Awas Yojana's remaining oversized rows (183 → 197
+facts) — the same fix that worked for Post-Matric Scholarship. Measuring it looked like a
+regression (precision 0.24 → 0.22, recall 0.67 → 0.62).
+
+**It wasn't really a regression — it was proof the judge is noisy.** Diffing the two runs found
+20 verdict changes; **12 of them had byte-identical evidence text.** Same claim, same evidence,
+different verdict, purely from re-running the judge — confirming what P-008 only suspected.
+
+**Fix: majority-vote judging.** `verify_claim()` now takes 3 independent judge calls and returns
+the majority verdict. Combined with the data fix: precision 0.25, recall 0.67 — essentially flat
+versus the ADR-018 state, not a further win. Answer-level catch rate dipped slightly (0.50 → 0.44)
+despite identical true/false-negative counts — the same catches landed on a different, one-fewer
+unique answer. Reported as a wash, kept for sound engineering reasons, not a score claim.
+
+---
+
 ## What's still open — named, not hand-waved
 
-- **Right-scheme-but-incomplete retrieval**: the relevance fix only catches evidence that's
-  *clearly off-topic* — not evidence from the correct scheme that's simply missing the specific
-  fact needed. Extending the row-splitting fix beyond the one oversized row already handled would
-  likely help.
+- **Wrong or ambiguous-scheme retrieval for claims that don't name a scheme**: false negatives now
+  concentrate in claims where retrieval picks the wrong scheme's evidence outright, not merely an
+  oversized row losing a retrieval race — extending row-splitting further didn't reach these.
 - **Genuine LLM-judge misjudgment**: Q42's caste-certificate claim — correct evidence, wrong
   verdict anyway. A real reliability limit on the method, not an engineering bug.
-- **Non-determinism**: re-verifying identical claim text at `temperature=0` still moves individual
-  verdicts run to run — any single reported number is a sample, not a fixed measurement.
+- **Non-determinism**: confirmed directly (12 of 20 verdict changes on identical evidence across
+  two runs) — any single reported number is a sample, not a fixed measurement. Majority voting
+  reduces but doesn't eliminate this.
 
 ---
 
