@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+pydantic
+anthropic
+sentence-transformers
+faiss-cpu
+numpy
+pandas
+python-dotenv
