@@ -22,9 +22,10 @@ COPY backend/ backend/
 COPY data/ data/
 COPY --from=frontend-build /app/frontend/dist frontend/dist
 
-# HF Spaces sets PORT (default 7860); bge-m3 downloads on first startup, not baked into the
-# image, so the first request after a fresh deploy is slower than subsequent ones.
-ENV PORT=7860
-EXPOSE 7860
+# Cloud Run sets PORT (defaults to 8080); bge-m3 downloads on first startup, not baked into the
+# image, so the first request after a cold start is slower than subsequent ones on the same
+# warm instance.
+ENV PORT=8080
+EXPOSE 8080
 
 CMD ["sh", "-c", "uvicorn main:app --app-dir backend --host 0.0.0.0 --port ${PORT}"]

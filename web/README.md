@@ -1,13 +1,3 @@
----
-title: CodeSwitch Verify
-emoji: 🩺
-colorFrom: indigo
-colorTo: purple
-sdk: docker
-app_port: 7860
-pinned: false
----
-
 # CodeSwitch-Verify — live demo
 
 A faithfulness-checked RAG demo for Hinglish government-scheme Q&A (PM-KISAN, Ayushman Bharat,
@@ -22,9 +12,8 @@ This is the deployable version of the pipeline built in the main `HinglishRAG-Fa
 - `backend/main.py` — FastAPI app: `POST /api/ask`, `GET /api/health`, serves `frontend/` as
   static files.
 - `backend/pipeline_src/` — a **deliberate, self-contained copy** of the main project's
-  `src/*.py` + `config/settings.py`. It's a copy, not an import, because this `web/` directory
-  gets deployed on its own (via `git subtree push --prefix=web`, from the main repo's root) — the
-  Space only ever receives what's under `web/`, so it can't reach up to `../src`.
+  `src/*.py` + `config/settings.py`. It's a copy, not an import, because Cloud Run's
+  `--source ./web` deploy only sees what's under `web/`, not the main repo's `../src`.
   **If the main project's pipeline changes, mirror the change here too if the live demo should
   reflect it.**
 - `frontend/` — React (Vite + Tailwind + Framer Motion) single-page UI. Built at deploy time by
@@ -61,16 +50,17 @@ To produce the build the backend serves in production: `cd web/frontend && npm r
 
 ## Configuration
 
-Requires one secret: `ANTHROPIC_API_KEY`. On Hugging Face Spaces, set this under
-**Settings → Repository secrets** — never commit it.
+Requires one secret: `ANTHROPIC_API_KEY`. On Google Cloud Run, this is stored in Secret Manager
+and wired in via `--set-secrets` at deploy time — never commit it. See `DEPLOY.md`.
 
 ## Rate limiting
 
 `/api/ask` is public and unauthenticated, and it calls a paid API — `backend/main.py` has a
 simple in-memory per-IP rate limit (10 requests/minute by default) as a basic cost guard. This is
 not a substitute for real infrastructure (it resets on restart and doesn't survive multiple
-container replicas), just a cheap safety net for a demo project.
+container replicas — Cloud Run can spin up more than one under load), just a cheap safety net for
+a demo project.
 
 ## Deployment
 
-See `DEPLOY.md` in this directory for the exact steps to push this to a Hugging Face Space.
+See `DEPLOY.md` in this directory for the exact steps to deploy this to Google Cloud Run.
