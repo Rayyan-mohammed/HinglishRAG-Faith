@@ -1,25 +1,22 @@
-"""Generates a Hinglish RAG answer from retrieved passages using Groq."""
+"""Generates a Hinglish RAG answer from retrieved passages using Claude."""
 
-from groq import Groq
+import anthropic
 
-from config.settings import GENERATOR_MODEL, GROQ_API_KEYS
+from config.settings import ANTHROPIC_API_KEY, GENERATOR_MODEL
 
-_clients = None
+_client = None
 
 
 def get_client():
-    """Returns the first configured client, for callers that only need one."""
-    return get_clients()[0]
-
-
-def get_clients():
-    """Returns one Groq client per configured API key (GROQ_API_KEY, GROQ_API_KEY_2, ...),
-    so a long batch run can fail over to another key's quota instead of waiting out one
-    key's daily limit -- see judge()'s retry loop in src/verification.py."""
-    global _clients
-    if _clients is None:
-        _clients = [Groq(api_key=key) for key in GROQ_API_KEYS]
-    return _clients
+    """Returns the shared Anthropic client. Single-key -- Claude's paid API doesn't have
+    Groq's free-tier daily-quota problem, so the multi-key failover ADR-016 added for Groq
+    isn't needed here (see ADR-021)."""
+    global _client
+    if _client is None:
+        # max_retries raised above the SDK default (2) -- a long batch run over hundreds of
+        # calls is more likely to transiently hit a 429/5xx than a single interactive request.
+        _client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY, max_retries=6)
+    return _client
 
 
 SYSTEM_PROMPT = """You are a helpful assistant answering questions about Indian government schemes.
@@ -33,12 +30,10 @@ def generate_answer(question, passages):
     user_prompt = f"Context:\n{context}\n\nQuestion: {question}\n\nAnswer in Hinglish:"
 
     client = get_client()
-    response = client.chat.completions.create(
+    response = client.messages.create(
         model=GENERATOR_MODEL,
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt},
-        ],
-        temperature=0.4,
+        max_tokens=1024,
+        system=SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": user_prompt}],
     )
-    return response.choices[0].message.content.strip()
+    return next(b.text for b in response.content if b.type == "text").strip()

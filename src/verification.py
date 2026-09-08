@@ -1,13 +1,10 @@
 """Per-claim retrieval + LLM-as-judge verification against evidence."""
 
 import json
-import time
 from collections import Counter
 
-from groq import RateLimitError
-
 from config.settings import VERIFIER_MODEL
-from src.generation import get_clients
+from src.generation import get_client
 from src.retrieval import retrieve
 
 VERDICT_PROMPT = """You are a strict fact-checker. Given a CLAIM and an EVIDENCE passage, decide if the
@@ -42,52 +39,41 @@ EVIDENCE: {evidence}
 """
 
 
-_last_good_client = 0  # remembers which key last worked, so we don't re-try exhausted ones first
+def _extract_json(raw):
+    """Claude often wraps JSON in a markdown code fence and adds explanatory prose after it,
+    despite being told to respond with JSON only -- find the first JSON value in the text and
+    parse just that, ignoring a fence and any trailing commentary around it. Raises
+    json.JSONDecodeError (same as a plain json.loads failure) if no JSON value is found."""
+    decoder = json.JSONDecoder()
+    for i, ch in enumerate(raw):
+        if ch in "{[":
+            try:
+                obj, _ = decoder.raw_decode(raw, i)
+                return obj
+            except json.JSONDecodeError:
+                continue
+    raise json.JSONDecodeError("No JSON value found in response", raw, 0)
 
 
-def judge(claim, evidence_text, max_retries=5):
+def judge(claim, evidence_text):
     """Core LLM-as-judge call: a claim against a block of evidence text.
     No retrieval involved — usable directly on hand-written claim/evidence pairs.
 
-    On a rate limit, first fails over to any other configured API key (GROQ_API_KEY_2, ...)
-    before waiting at all -- a key hitting its daily quota (P-001) doesn't mean another key
-    is out too. Only sleeps with exponential backoff once every configured key has been
-    tried and failed in the same round (all keys share Groq's short-term tokens-per-minute
-    limit even when their daily budgets differ)."""
-    global _last_good_client
-    clients = get_clients()
-    if not clients:
-        raise RuntimeError("No GROQ_API_KEY configured — check .env")
-    response = None
-
-    for attempt in range(max_retries):
-        last_error = None
-        for offset in range(len(clients)):
-            client_idx = (_last_good_client + offset) % len(clients)
-            try:
-                response = clients[client_idx].chat.completions.create(
-                    model=VERIFIER_MODEL,
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": VERDICT_PROMPT.format(claim=claim, evidence=evidence_text),
-                        }
-                    ],
-                    temperature=0,
-                )
-                _last_good_client = client_idx
-                break
-            except RateLimitError as e:
-                last_error = e
-        if response is not None:
-            break
-        if attempt == max_retries - 1:
-            raise last_error
-        time.sleep(2**attempt)
-
-    raw = response.choices[0].message.content.strip()
+    Switched from Groq to Claude in ADR-021. No manual retry/failover loop needed here --
+    Claude's paid API doesn't have Groq's free-tier daily-quota problem that made ADR-016's
+    multi-key failover necessary; the Anthropic client already retries 429/5xx with backoff
+    (see get_client() in src/generation.py)."""
+    client = get_client()
+    response = client.messages.create(
+        model=VERIFIER_MODEL,
+        max_tokens=256,
+        messages=[
+            {"role": "user", "content": VERDICT_PROMPT.format(claim=claim, evidence=evidence_text)}
+        ],
+    )
+    raw = next(b.text for b in response.content if b.type == "text")
     try:
-        result = json.loads(raw)
+        result = _extract_json(raw)
     except json.JSONDecodeError:
         result = {"verdict": "UNVERIFIABLE", "confidence": 0.0}
 
@@ -95,17 +81,42 @@ def judge(claim, evidence_text, max_retries=5):
     return result
 
 
-def verify_claim(claim, index, passages, top_k=2, n_samples=3):
-    """Retrieves evidence, then judges the claim against it by majority vote over
-    n_samples independent judge() calls.
+def verify_claim(claim, index, passages, top_k=2, n_samples=3, context_passages=None):
+    """Judges a claim against evidence by majority vote over n_samples independent judge() calls.
 
-    Added after ADR-019 found the judge is not fully deterministic even at temperature=0:
-    re-running the full pipeline with byte-identical evidence text still flipped some verdicts
-    (Groq's hosted MoE model likely has batching effects). Majority voting trades n_samples-x
-    API cost for a verdict that doesn't depend on a single unlucky sample. On a full split
-    (no verdict wins more than half the votes), falls back to UNVERIFIABLE as the conservative
-    default rather than picking arbitrarily."""
-    evidence_passages = retrieve(claim, index, passages, top_k=top_k)
+    If context_passages is given -- the passages that were actually retrieved and handed to the
+    generator to produce the answer this claim came from -- those are merged with a fresh
+    per-claim retrieval into one evidence pool (deduplicated), rather than either alone.
+    Context-only was tried first (ADR-021) on the theory that checking faithfulness to what the
+    generator actually saw would avoid the wrong-scheme evidence a short, scheme-ambiguous claim
+    often pulls in on its own -- and it worked for that (false-alarm rate improved). But it also
+    tied verification's blind spots to generation's: if the question-level retrieval that
+    produced the answer missed a fact (e.g. a specific exclusion clause) that exists elsewhere in
+    the corpus, verification saw exactly the same gap and confirmed a false "the context doesn't
+    say this" claim as SUPPORTED -- confirmed directly by inspecting evidence_text for several of
+    the resulting false negatives. Merging in a fresh per-claim lookup gives the judge a second,
+    independent chance to find that fact without giving up the wrong-scheme protection
+    context_passages provides on their own. Falls back to fresh retrieve() only when
+    context_passages isn't supplied at all, e.g. calling verify_claim() standalone without a
+    generation step.
+
+    Also judges by majority vote over n_samples independent judge() calls -- added after ADR-019
+    found the judge is not fully deterministic even at temperature=0: re-running the full pipeline
+    with byte-identical evidence text still flipped some verdicts. Majority voting trades
+    n_samples-x API cost for a verdict that doesn't depend on a single unlucky sample. On a full
+    split (no verdict wins more than half the votes), falls back to UNVERIFIABLE as the
+    conservative default rather than picking arbitrarily."""
+    if context_passages is not None:
+        extra_passages = retrieve(claim, index, passages, top_k=top_k)
+        seen = set()
+        evidence_passages = []
+        for p in list(context_passages) + extra_passages:
+            key = (p["source"], p["text"])
+            if key not in seen:
+                seen.add(key)
+                evidence_passages.append(p)
+    else:
+        evidence_passages = retrieve(claim, index, passages, top_k=top_k)
     evidence_text = "\n\n".join(p["text"] for p in evidence_passages)
 
     samples = [judge(claim, evidence_text) for _ in range(n_samples)]

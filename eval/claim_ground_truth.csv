@@ -1,210 +1,245 @@
 question_id,claim,true_hallucinated
-1,"Haan, aap PM-KISAN ke liye eligible ho",False
-1,Pehle toh scheme sirf small,False
-1,marginal farmers ke liye tha,False
-1,"ab sabhi farmer families ko benefit milta hai, chahe unke paas kitni bhi zameen ho",False
-1,"Bas micro land holdings jo cultivable nahi hai, unko exclude kiya gaya hai",False
-1,"Aapke paas 1 acre zameen hai, toh aapke liye scheme open hai",False
-2,"Nahin, PM-KISAN scheme sirf un kisano ke liye nahin hai jinke paas apni zameen hai",True
-2,ismein kya kiraye ki zameen wale apply kar sakte hain iske baare mein scheme ke context mein koi jankari nahin di gayi hai,True
-2,"Scheme ke mutabik, ismein landholding farmers' families ko financial benefit diya jaata hai",False
-2,yeh nahin bataya gaya hai ki kiraye ki zameen wale ismein shaamil hain ya nahin,True
-3,"Arre, yeh to context mein clearly nahi likha hai ki government employee hone se PM-KISAN ka fayda milta hai ya nahi",True
-3,Bas itna likha hai ki shuruat mein sirf small,False
-3,marginal farmers ke liye tha,False
-3,baad mein sabhi farmer families ko include kar liya gaya,False
-3,"exclusion criteria ke baare mein kuch nahi likha hai, to hum keh nahi sakte ki government employee hone se fayda milega ya nahi",True
-4,PM-KISAN ke liye minimum landholding requirement nahin hai,False
-4,"Pehle scheme launch hua tha sirf Small & Marginal Farmers' (SMF) families ke liye, jinke paas 2 hectare tak ki landholding thi",False
-4,baad mein scheme revise kiya gaya,False
-4,"ab yeh scheme sabhi farmer families ke liye hai, chahe unke paas kitni bhi landholding ho",False
-5,"PM-KISAN ki agarli installment kab tak aayegi, iske baare mein to exact date nahi di gayi hai",False
-5,yeh scheme ke mutabik 4 monthly period mein 3 equal installments of Rs.2000 each di jaati hai,False
-5,"Toh agar aapke paas pehli installment aa chuki hai, toh agli installment 4 month ke baad aayegi",False
-6,Context mein naye kisan registration ke liye last date ka ullekh nahi hai,False
-7,PM-KISAN ke liye eKYC complete karne ki deadline ke bare mein is context mein koi jankari nahin hai,False
-8,"PM-KISAN scheme mein ek saal mein total 6000 rupees milta hai, jo ki 3 installments mein diya jata hai, har installment mein 2000 rupees",False
-9,Har installment mein 2000 rupees transfer hote hain,False
-9,"Total 6000 rupees per annum per family diya jata hai, jo 3 equal installments mein diya jata hai, har 4 mahine mein 2000 rupees",False
-10,"Haan, PM-KISAN scheme ke hisab se, sabhi states ke kisano ke liye amount same hai, jo ki Rs. 6000 per annum per family hai, jo ki 3 equal installments mein diya jata hai, har installment Rs. 2000 ka hota hai",True
-11,"Haan, agar aapka application late approve hua hai, to bhi aapko pichle installments mil sakte hain",False
-11,"PM-KISAN scheme ke hisaab se, agar aapka naam portal par upload ho gaya hai, to aapko us 4-monthly period ke liye installment mil sakta hai",False
-11,agle installments bhi mil sakte hain jab tak ki delay ka kaaran resolve ho jaye,False
-12,"PM-KISAN ke liye aapko name, age, gender, category (SC/ST), Aadhaar number (Assam, Meghalaya, J&K ke alawa), bank account number, IFSC code",False
-12,"kuchh anya identification documents jaise ki driving licence, voter ID card, NREGA job card chahiye",False
-12,Mobile number bhi dena hai,False
-12,woh mandatory nahi hai,False
-13,Aadhaar card PM-KISAN ke liye mandatory hai,False
-13,Jammu & Kashmir ke kuch cases mein exemption di gayi hai,False
-13,"Jab tak aapke paas Aadhaar card nahi hai, toh aapko doosre documents jaise ki driving license, voter ID card, ya NREGA job card bhi submit karne pad sakte hain",False
-13,"generally, Aadhaar card mandatory hai PM-KISAN ke benefits ke liye",False
-14,"Land ownership proof ke liye aapko apna land ka document dena hota hai, jaise ki land record ya ownership certificate",False
-14,PM Awas Yojana mein to yeh clearly likha hai ki beneficiaries ko ownership proof of land dena hota hai,False
-14,"PM-KISAN mein bhi land records ka mention hai, jahan par land ownership ki details hoti hain",False
-15,Bank account details verify karne ke liye aapko apna bank account number,False
-15,IFSC code submit karna padta hai,False
-15,"Iske alawa, aapko apna Aadhaar number bhi submit karna padta hai",False
-15,Jammu & Kashmir ke liye yeh zaruri nahi hai,False
-15,wahan par Aadhaar number har kisi ke paas nahi hai,False
-16,"Ayushman Bharat card banwane ke liye jo beneficiaries Haryana Mukhyamantri Antyodaya Parivar Utthan Yojana ke under aate hain, unka annual family income 1.80 lakh se kam hona chahiye, toh ve eligible hain",False
-16,"Unhe koi request letter ya entitlement letter dena nahi padta, bas Ayushman Kiosk ya Common Services Centers (CSC) se apna Ayushman Bharat card le sakte hain",False
-17,Ayushman Bharat Pradhan Mantri Jan Arogya Yojana ke beneficiaries ke bare mein diya gaya context sirf unlogon ke bare mein batata hai jo SECC-2011 database mein specific categories mein aate hain,False
-17,Haryana Mukhyamantri Antyodaya Parivar Utthan Yojana ke beneficiaries jinki annual family income 1.80 lakh se kam hai,False
-17,Private sector employees ke bare mein koi jankari nahi di gayi hai,False
-17,hum keh nahi sakte ki ve iska labh le sakte hain ya nahi,False
-18,"Nahi, agar aapki family SECC list mein nahi hai toh aap Ayushman Bharat Pradhan Mantri Jan Arogya Yojana ke liye apply nahi kar sakte",False
-18,"Scheme ke mutabik, sirf unhi families ko benefit milega jinke naam SECC-2011 database mein hain",False
-19,"Nahin, Ayushman Bharat scheme sirf BPL families ke liye nahi hai",False
-19,Ismein un logon ko bhi cover kiya jaata hai jo SECC-2011 database mein specific categories mein aate hain,False
-19,"Haryana mein, jo log Mukhyamantri Antyodaya Parivar Utthan Yojana ke beneficiaries hain, unki annual family income agar 1.80 lakh se kam hai, to unhe bhi Ayushman Bharat ka labh mil sakta hai",False
-20,"Ayushman card banwane ki koi last date toh mentioned nahi hai, so aap kabhi bhi apna Ayushman card banwa sakte hain, Ayushman Kiosk ya Common Services Centers (CSC) se",False
-21,"Sorry, context mein iska jawab nahi hai",False
-21,"Context mein sirf Ayushman Bharat ke bare mein kuch jaankari hai, jismein grievance raise karne ki website link di gayi hai, hospital dwara additional charge na lene ki baat kahi gayi hai",False
-21,priority beneficiaries ke bare mein bataya gaya hai,False
-21,treatment claim submit karne ki time limit ke bare mein koi jaankari nahi hai,False
-22,"Ayushman Bharat Pradhan Mantri Jan Arogya Yojana ke context mein, ismein card renewal ke bare mein kuch specific information nahi hai",False
-22,yeh bataya gaya hai ki aap national portability basis par benefits le sakte hain,False
-22,card renewal ke liye koi specific details nahi diye gaye hain,False
-23,"Ayushman Bharat mein per family 5 lakh rupye tak ka health cover milta hai, jo ki family floater basis pe hai, matlab ki ye amount ek ya sabhi family members use kar sakte hain",False
-24,Ayushman Bharat ke bare mein aapne sawal kiya hai,False
-24,diya gaya context iska jawaab nahin deta,True
-24,Diye gaye context mein sirf Ayushman Bharat ke udeshya ke baare mein bataya gaya hai,True
-24,iske bare mein koi jaankari nahin hai ki yeh cover ek baar ke liye hai ya har saal renew hota hai,True
-25,Ayushman Bharat ke tahat treatment ka poora kharcha cover hota hai,False
-25,sirf 5 lakh tak,False
-25,"Agar kharcha 5 lakh se zyada hota hai, toh uske baad ka kharcha aapko khud dena padta hai",False
-26,"Nahin, context mein aisa koi information nahi hai ki cover amount har state mein alag hota hai",False
-26,"Sab jagah Rs. 5,00,000 per family per year ka cover diya jaata hai",False
-27,"Ayushman Bharat card banwane ke liye aapko PM/CM entitlement letter, Ration Card",False
-27,Aadhaar Card chahiye,False
-27,Aadhaar Card sirf identification ke liye hai,False
-28,"Ration card ek zaroori document hai Ayushman Bharat Pradhan Mantri Jan Arogya Yojana ke liye, jiske liye eligibility check kiya jata hai",False
-28,Iske alawa PM/CM entitlement letter,False
-28,Aadhaar Card bhi zaroori hain identification ke liye,False
-29,"Context mein iska jawab nahi hai, bas itna pata hai ki hospitals mein free treatment milega",False
-29,hospitals ko additional money charge karne ki ijazat nahi hogi,False
-29,koi specific ID ke bare mein kuch nahi likha hai,False
-30,"Family details verify karne ke liye aapko apne documents jaise ki Aadhaar Card, Ration Card",False
-30,"anya prescribed documents jaise ki Driving Licence, Voters' ID Card, NREGA Job Card, etc",True
-30,submit karne pad sakte hain,False
-31,Post-Matric scholarship ke liye woh students eligible hain jo Scheduled Castes se belong karte hain,False
-31,jo post-matriculation ya post-secondary courses pursue kar rahe hain,False
-31,"Iske alawa, unke parents ki income 2.5 lakh se zyada nahi honi chahiye",False
-31,students ko matriculation ya higher secondary examination pass hona chahiye,False
-32,"Nahin, yeh scholarship sirf Scheduled Caste (SC) students ke liye hai, general category ke students ismein apply nahi kar sakte",False
+1,PM-KISAN scheme pehle sirf small aur marginal farmers ke liye tha,False
+1,"Ab PM-KISAN scheme sabhi farmer families ko benefit deta hai, chahe unke paas kitni bhi zameen ho",False
+1,"Micro land holdings jo cultivable nahi hain, unko PM-KISAN scheme se exclude kiya gaya hai",False
+1,1 acre zameen wale farmers ke liye PM-KISAN scheme open hai,False
+2,PM-KISAN scheme sirf un kisano ke liye hai jinke paas apni zameen hai,False
+2,Scheme ke context mein yeh jankari nahin di gayi hai ki kiraye ki zameen wale apply kar sakte hain,True
+2,PM-KISAN scheme ke mutabik landholding farmers' families ko financial benefit diya jaata hai,False
+2,Scheme mein yeh nahin bataya gaya hai ki kiraye ki zameen wale ismein shaamil hain ya nahin,True
+3,Context mein clearly nahi likha hai ki government employee hone se PM-KISAN ka fayda milta hai ya nahi.,True
+3,PM-KISAN ki shuruat mein sirf small aur marginal farmers ke liye tha.,False
+3,Baad mein PM-KISAN sabhi farmer families ko include kar liya gaya.,False
+3,PM-KISAN ke exclusion criteria ke baare mein context mein kuch nahi likha hai.,True
+4,PM-KISAN ke liye minimum landholding requirement nahin hai.,False
+4,"Pehle PM-KISAN scheme launch hua tha sirf Small & Marginal Farmers' (SMF) families ke liye, jinke paas 2 hectare tak ki landholding thi.",False
+4,Baad mein PM-KISAN scheme revise kiya gaya.,False
+4,"Ab PM-KISAN scheme sabhi farmer families ke liye hai, chahe unke paas kitni bhi landholding ho.",False
+5,PM-KISAN ki agarli installment ke liye exact date nahi di gayi hai.,False
+5,PM-KISAN scheme ke mutabik 4 monthly period mein 3 equal installments di jaati hai.,False
+5,PM-KISAN mein har ek installment Rs. 2000 ki hoti hai.,False
+5,"Agar PM-KISAN mein pehli installment aa chuki hai, toh agli installment 4 month ke baad aayegi.",False
+6,Context mein naye kisan registration ke liye last date ka ullekh nahi hai.,False
+7,PM-KISAN ke liye eKYC complete karne ki deadline ke bare mein is context mein koi jankari nahin hai.,False
+8,PM-KISAN scheme mein ek saal mein total 6000 rupees milta hai.,False
+8,PM-KISAN scheme mein yeh 6000 rupees 3 installments mein diya jata hai.,False
+8,PM-KISAN scheme mein har installment mein 2000 rupees milta hai.,False
+9,Har installment mein 2000 rupees transfer hote hain.,False
+9,Total 6000 rupees per annum per family diya jata hai.,False
+9,6000 rupees 3 equal installments mein diya jata hai.,False
+9,Installments har 4 mahine mein diye jate hain.,False
+10,PM-KISAN scheme ke hisaab se sabhi states ke kisano ke liye amount same hai,True
+10,PM-KISAN scheme mein Rs. 6000 per annum per family diya jata hai,False
+10,PM-KISAN scheme ke amount ko 3 equal installments mein diya jata hai,False
+10,PM-KISAN scheme mein har installment Rs. 2000 ka hota hai,False
+11,"Agar application late approve hua hai, to bhi pichle installments mil sakte hain.",False
+11,"PM-KISAN scheme ke hisaab se, agar naam portal par upload ho gaya hai, to us 4-monthly period ke liye installment mil sakta hai.",False
+11,Agle installments mil sakte hain jab tak ki delay ka kaaran resolve ho jaye.,False
+12,PM-KISAN ke liye name chahiye.,False
+12,PM-KISAN ke liye age chahiye.,False
+12,PM-KISAN ke liye gender chahiye.,False
+12,PM-KISAN ke liye category (SC/ST) chahiye.,False
+12,"PM-KISAN ke liye Aadhaar number chahiye, Assam, Meghalaya, aur J&K ke alawa.",False
+12,PM-KISAN ke liye bank account number chahiye.,False
+12,PM-KISAN ke liye IFSC code chahiye.,False
+12,"PM-KISAN ke liye kuchh anya identification documents jaise ki driving licence, voter ID card, NREGA job card chahiye.",False
+12,PM-KISAN ke liye mobile number dena mandatory nahi hai.,False
+13,Aadhaar card PM-KISAN ke liye mandatory hai.,False
+13,"Assam, Meghalaya, aur Jammu & Kashmir ke kuch cases mein Aadhaar card ke liye exemption di gayi hai.",False
+13,"Jab tak aapke paas Aadhaar card nahi hai, toh aapko doosre documents jaise ki driving license, voter ID card, ya NREGA job card submit karne pad sakte hain.",False
+13,"Generally, Aadhaar card mandatory hai PM-KISAN ke benefits ke liye.",False
+14,"Land ownership proof ke liye aapko apna land ka document dena hota hai, jaise ki land record ya ownership certificate.",False
+14,PM Awas Yojana mein beneficiaries ko ownership proof of land dena hota hai.,False
+14,"PM-KISAN mein land records ka mention hai, jahan par land ownership ki details hoti hain.",False
+15,Bank account details verify karne ke liye aapko apna bank account number aur IFSC code submit karna padta hai.,False
+15,Bank account details verify karne ke liye aapko apna Aadhaar number submit karna padta hai.,False
+15,"Assam, Meghalaya, aur Jammu & Kashmir ke liye Aadhaar number submit karna zaruri nahi hai.",False
+15,"Assam, Meghalaya, aur Jammu & Kashmir mein Aadhaar number har kisi ke paas nahi hai.",False
+16,Ayushman Bharat card banwane ke liye Haryana Mukhyamantri Antyodaya Parivar Utthan Yojana ke under aane wale beneficiaries ka annual family income 1.80 lakh se kam hona chahiye toh ve eligible hain.,False
+16,Ayushman Bharat card ke liye eligible beneficiaries unhe koi request letter ya entitlement letter dena nahi padta.,False
+16,Ayushman Bharat card ke liye eligible beneficiaries Ayushman Kiosk se apna card le sakte hain.,False
+16,Ayushman Bharat card ke liye eligible beneficiaries Common Services Centers (CSC) se apna card le sakte hain.,False
+17,Ayushman Bharat Pradhan Mantri Jan Arogya Yojana ke beneficiaries ke bare mein diya gaya context sirf unlogon ke bare mein batata hai jo SECC-2011 database mein specific categories mein aate hain.,False
+17,Haryana Mukhyamantri Antyodaya Parivar Utthan Yojana ke beneficiaries ki annual family income 1.80 lakh se kam hai.,False
+17,Private sector employees ke bare mein context mein koi jankari nahi di gayi hai.,False
+17,Context ke base par yeh nahi kaha ja sakta ki private sector employees Ayushman Bharat Pradhan Mantri Jan Arogya Yojana ya Haryana Mukhyamantri Antyodaya Parivar Utthan Yojana ka labh le sakte hain ya nahi.,False
+18,Agar aapki family SECC list mein nahi hai toh aap Ayushman Bharat Pradhan Mantri Jan Arogya Yojana ke liye apply nahi kar sakte.,False
+18,"Ayushman Bharat Pradhan Mantri Jan Arogya Yojana ke mutabik, sirf unhi families ko benefit milega jinke naam SECC-2011 database mein hain.",False
+19,Ayushman Bharat scheme sirf BPL families ke liye nahi hai,False
+19,Ayushman Bharat scheme mein un logon ko cover kiya jaata hai jo SECC-2011 database mein specific categories mein aate hain,False
+19,"Haryana mein, jo log Mukhyamantri Antyodaya Parivar Utthan Yojana ke beneficiaries hain aur jinki annual family income 1.80 lakh se kam hai, unhe Ayushman Bharat ka labh mil sakta hai",False
+20,Ayushman card banwane ki koi last date mentioned nahi hai.,False
+20,Aap kabhi bhi apna Ayushman card banwa sakte hain.,False
+20,Ayushman card Ayushman Kiosk se banwaya ja sakta hai.,False
+20,Ayushman card Common Services Centers (CSC) se banwaya ja sakta hai.,False
+21,Context mein treatment claim submit karne ki time limit ke bare mein koi jaankari nahi hai.,False
+21,Context mein sirf Ayushman Bharat ke bare mein kuch jaankari hai.,False
+21,Context mein Ayushman Bharat ke bare mein grievance raise karne ki website link di gayi hai.,False
+21,Context mein Ayushman Bharat ke bare mein hospital dwara additional charge na lene ki baat kahi gayi hai.,False
+21,Context mein Ayushman Bharat ke bare mein priority beneficiaries ke bare mein bataya gaya hai.,False
+22,Ayushman Bharat Pradhan Mantri Jan Arogya Yojana ke context mein card renewal ke bare mein kuch specific information nahi hai.,False
+22,Ayushman Bharat Pradhan Mantri Jan Arogya Yojana mein aap national portability basis par benefits le sakte hain.,False
+22,Ayushman Bharat Pradhan Mantri Jan Arogya Yojana ke context mein card renewal ke liye koi specific details nahi diye gaye hain.,False
+23,Ayushman Bharat mein per family 5 lakh rupye tak ka health cover milta hai.,False
+23,Ayushman Bharat mein health cover family floater basis pe hai.,False
+23,Ayushman Bharat mein health cover ka amount ek ya sabhi family members use kar sakte hain.,False
+24,Ayushman Bharat ke bare mein aapne sawal kiya hai.,False
+24,Diye gaye context mein Ayushman Bharat ke udeshya ke baare mein bataya gaya hai.,False
+24,Diye gaye context mein yeh jaankari nahin hai ki Ayushman Bharat cover ek baar ke liye hai ya har saal renew hota hai.,True
+25,Ayushman Bharat ke tahat treatment ka poora kharcha cover hota hai sirf 5 lakh tak.,False
+25,"Agar treatment ka kharcha 5 lakh se zyada hota hai, toh uske baad ka kharcha aapko khud dena padta hai.",False
+26,Context mein aisa koi information nahi hai ki cover amount har state mein alag hota hai.,False
+26,"Sab jagah Rs. 5,00,000 per family per year ka cover diya jaata hai.",False
+27,Ayushman Bharat card banwane ke liye PM/CM entitlement letter chahiye.,False
+27,Ayushman Bharat card banwane ke liye Ration Card chahiye.,False
+27,Ayushman Bharat card banwane ke liye Aadhaar Card chahiye.,False
+27,Aadhaar Card sirf identification ke liye hai.,False
+28,Ration card ek zaroori document hai Ayushman Bharat Pradhan Mantri Jan Arogya Yojana ke liye.,False
+28,Ayushman Bharat Pradhan Mantri Jan Arogya Yojana ke liye eligibility check kiya jata hai ration card ke through.,False
+28,PM/CM entitlement letter zaroori hai Ayushman Bharat Pradhan Mantri Jan Arogya Yojana ke liye identification ke liye.,False
+28,Aadhaar Card zaroori hai Ayushman Bharat Pradhan Mantri Jan Arogya Yojana ke liye identification ke liye.,False
+29,Context mein iska jawab nahi hai.,False
+29,Hospitals mein free treatment milega.,False
+29,Hospitals ko additional money charge karne ki ijazat nahi hogi.,False
+29,Context mein koi specific ID ke bare mein kuch nahi likha hai.,False
+30,Family details verify karne ke liye Aadhaar Card submit karna pad sakta hai.,False
+30,Family details verify karne ke liye Ration Card submit karna pad sakta hai.,False
+30,"Family details verify karne ke liye anya prescribed documents jaise ki Driving Licence, Voters' ID Card, NREGA Job Card submit karne pad sakte hain.",True
+31,Post-Matric scholarship ke liye Scheduled Castes se belonging karte hue students eligible hain.,False
+31,Post-Matric scholarship ke liye woh students eligible hain jo post-matriculation ya post-secondary courses pursue kar rahe hain.,False
+31,Post-Matric scholarship ke liye eligible students ke parents ki income 2.5 lakh se zyada nahi honi chahiye.,False
+31,Post-Matric scholarship ke liye students ko matriculation ya higher secondary examination pass hona chahiye.,False
+32,Yeh scholarship sirf Scheduled Caste (SC) students ke liye hai,False
+32,General category ke students is scholarship mein apply nahi kar sakte,False
 32,"Is scheme ke hisaab se, sirf SC category ke students hi eligible hain",False
-33,Family income limit is 2.5 lakh rupees per year hai is Post-Matric Scholarship ke liye,False
-33,"Yaani, agar aapke parents ka annual income 2.5 lakh se zyada hai, to aap is scholarship ke liye eligible nahi hain",False
-34,"Haan, diploma students bhi is scholarship ke liye apply kar sakte hain",False
-34,yeh scholarship post-matriculation or post-secondary courses ke liye di jaati hai,False
-34,diploma courses bhi ismein include hain,False
-34,"unhein sabhi eligibility conditions ko poora karna hoga, jaise ki SC category se hona, matriculation ya higher secondary pass hona",False
-34,income ceiling ke andar hona,False
-35,Scholarship application ki last date ke bare mein toh yahan kuchh specifically mentioned nahi hai,False
-35,yeh bataya gaya hai ki State Governments/UT Administrations May-June mein scheme ki details announce karte hain,False
-35,applications maangte hain,False
-35,"Toh, aapko apne state government ki website ya unke dwara issue kiye gaye advertisements dekhne chahiye taaki aapko pata chal sake ki application ki last date kya hai",False
-36,"Context mein renewal application ki date ke bare mein koi information nahi hai, sirf eligibility criteria",False
-36,scheme ke baare mein bataya gaya hai,False
-36,"Toh, mujhe kehna padega ki context mein is sawal ka jawab nahi hai",False
-37,"Sorry, context mein is sawal ka jawab nahi hai",False
-37,Context sirf documents ke baare mein batata hai,False
-37,result aane ke time ke baare mein kuch nahi kehtha,False
-38,Post-Matric scholarship mein milne wali amount alag-alag categories ke hisab se different hai,False
-38,"Is scheme mein maintenance allowance, fees, study tour charges, thesis typing/printing charges, book allowance",False
-38,additional allowance for students with disabilities shamil hai,False
-38,Maintenance allowance ki amount Group I ke liye 1200 rupees per month hostellers ke liye,False
-38,550 rupees per month day scholars ke liye hai,False
-38,Group II ke liye yeh amount 820 rupees per month hostellers ke liye,False
-38,530 rupees per month day scholars ke liye hai,False
-38,Group III ke liye yeh amount 570 rupees per month hostellers ke liye,False
-38,300 rupees per month day scholars ke liye hai,False
-38,Group IV ke liye yeh amount 380 rupees per month hostellers ke liye,False
-38,230 rupees per month day scholars ke liye hai,False
-39,"Haan, amount course ke hisaab se alag hoti hai",False
-39,"Jaise ki Group I, Group II, Group III",False
-39,Group IV courses ke liye maintenance allowance alag-alag hai,False
-39,yeh amount day scholars,False
-39,hostellers ke liye bhi alag hai,False
-40,"Haan, hostel mein rehne wale students ko maintenance allowance milta hai, jo ki 400 se 1350 rupees per month tak ho sakta hai",False
-41,"Scholarship amount direct bank account mein aata hai, college ko nahi jata",False
-41,State Government/UT administrations ko instruction hai ki wo cash payment avoid karein,False
-41,scholarship amount beneficiaries ke bank accounts mein directly transfer karein,False
-42,"Scholarship apply karne ke liye aapko kuch documents chahiye honge, jaise ki application form, passport size photo, certificates, diploma, degree, caste certificate, income certificate",False
-42,agar aap pehle se scholarship le rahe hain toh uska receipt bhi chahiye hoga,False
-42,"Sabse pehle aapko application form bharna hoga, uske saath aapko apni passport size photo lagani hogi",False
-42,"saath hi saath aapko apne certificates, diploma, degree ki copies lagani hogi",False
-42,Agar aap SC category se hain toh aapko caste certificate ki copy bhi lagani hogi,False
-42,income certificate bhi chahiye hoga,False
-42,Agar aap pehle se scholarship le rahe hain toh aapko uska receipt bhi lagana hoga,False
-43,"Income certificate kis authority se banwana padta hai, iska context mein koi jankari nahi hai",True
-43,Context mein sirf income certificate ki jarurat ke bare mein bataya gaya hai,True
-43,yeh nahi bataya gaya hai ki kis authority se banwana padta hai,True
-44,"Nahin, caste certificate submit karna mandatory nahin hai",True
-44,category (SC/ST) ka information dena zaroori hai,False
-45,"Bank passbook ki copy ke alawa, aapko Ayushman Bharat ke liye PM/CM entitlement letter, Ration Card",False
-45,Aadhaar Card ki zarurat pad sakti hai,False
-45,"agar aap PM-KISAN ke liye apply kar rahe hain, to aapko apna Aadhaar number, bank account details",False
-45,"anya documents jaise ki Name, Age, Gender, Category (SC/ST)",False
-45,mobile number (optional) dena hoga,False
-45,"Agar aap Post-Matric Scholarship ke liye apply kar rahe hain, to aapko application form, passport size photo, certificates, caste certificate, income declaration",False
-45,anya documents dena hoga,False
-46,"PM Awas Yojana ke liye eligible beneficiaries apply kar sakte hain, jinke paas ghar nahi hai ya jinke paas kachcha ya dilapidated ghar hai",False
-46,"Scheme ke tahat, EWS (Economically Weaker Section) category ke logon ko priority di jaati hai",False
-46,anya eligible families bhi apply kar sakti hain,False
-47,"Nahin, jinke paas already pucca ghar hai wo eligible nahi hain",False
-47,agar aapke paas pucca ghar hai,False
-47,"uska size 21 sqm se kam hai, to aap existing house ko enhance karne ke liye eligible ho sakte hain",False
-48,LIG category ke liye income criteria hai,False
-48,EWS households ke liye annual income upto Rs. 3.00 lakhs hai,False
-48,LIG households ke liye annual income Rs. 3.00 lakhs se Rs. 6.00 lakhs ke beech hai,False
-49,"Haan, Pradhan Mantri Awas Yojana (Urban) 2.0 scheme sirf shehri ilakon ke logo ke liye hai, jismein unhein affordable housing provide kiya jaata hai",False
-49,Is scheme mein do models hain - ek public sector agencies dwara,True
-49,doosra private sector dwara,True
-50,"PM Awas Yojana ke context mein last date ki koi jankari nahi hai, sirf yeh hai ki iska launch 25th June 2015 ko hua tha",False
-50,iska target hai ki 2022 tak sab eligible beneficiaries ko pucca houses mil jayein,False
-50,last date ke bare mein koi specific information nahi hai,False
-51,Mujhe khed hai,False
-51,aapka sawal mere paas diye gaye context se related nahi hai,True
-51,Diye gaye context me sirf PM-KISAN,True
-51,Post-Matric Scholarship ke bare me jankari hai,True
-51,subsidy claim ya construction ke bare me koi jankari nahi hai,True
-51,Aapka sawal ka jawab dena mushkil hai,False
-52,Application status check karne ke liye wait karne ki koi specific time limit nahin di gayi hai,False
-52,"Ayushman Bharat ke liye to aap online check kar sakte hain, https://mera.pmjay.gov.in/search/login par jakar",False
-52,Baaki schemes ke liye koi specific information nahin hai,False
-53,"PM Awas Yojana mein interest subsidy EWS/LIG, MIG-I",False
-53,MIG-II ke liye alag-alag hai,False
-53,"EWS/LIG ke liye 6.5% interest subsidy milti hai, MIG-I ke liye 4%",False
-53,MIG-II ke liye 3% interest subsidy milti hai,False
-53,Yeh subsidy loan amount,False
-53,carpet area ke aadhar par di jaati hai,False
-54,"Haan, subsidy amount income category ke hisaab se alag hoti hai",False
-54,"EWS/LIG category ke liye interest subsidy 6.5% hai, MIG-I ke liye 4%",False
-54,MIG-II ke liye 3% hai,False
-54,"Iske alawa, loan amount bhi alag hai - EWS/LIG ke liye Rs. 6 lakh, MIG-I ke liye Rs. 9 lakh",False
-54,MIG-II ke liye Rs. 12 lakh,False
-55,"Arre, yeh question Ayushman Bharat ke bare mein nahi hai, balki PM Awas Yojana ke Credit Linked Subsidy Scheme (CLSS) ke bare mein hai",False
-55,"Toh, is scheme mein maximum loan amount jo cover hota hai wo Rs. 12 lakh tak hai",False
-55,"interest subsidy sirf Rs. 6 lakh, Rs. 9 lakh",False
-55,Rs. 12 lakh tak ke loan amount par milta hai,False
-55,"yeh subsidy EWS/LIG, MIG-I",False
-55,MIG-II categories ke hisab se alag-alag hai,False
-56,Subsidy ek baar hi milti hai,False
-56,wo CNAs dwara PLIs ke disbursements ke aadhar par release hoti hai,False
-56,"Jab PLI beneficiary ko loan deti hai, to CNA subsidy ko ek baar mein PLI ko release karti hai",False
-56,"phir PLI us subsidy ko beneficiary ke account mein upfront credit karti hai, jisse beneficiary ko principal loan amount kam karke EMI deni hoti hai",False
-57,PM Awas Yojana ke liye documents ke baare mein context mein kuchh specific jankari nahin hai,True
-57,yeh bataya gaya hai ki ismein female head of the family ko owner ya co-owner hone ki provision hai,False
-57,"application ke liye konsi documents chahiye, iske baare mein koi jankari nahin di gayi hai",True
-58,"Income proof ke liye, agar aapke parents employed hain, toh unhe apne employer se income certificate lena hoga",False
-58,"Agar aapke parents self-employed hain, toh unhe affidavit on non-judicial stamp paper par income declaration dena hoga, jismein unki income from all sources ka detail hona chahiye",False
-59,"Property documents mein aapko ownership proof of land dena hota hai, jismein land ki malikiyat ko prove karna hota hai",False
-59,"Iske alawa, aapko building plan of the house, economic status",False
-59,eligibility ke bare mein bhi details deni hoti hai,False
-59,"agar state/UT ne exemption di hai, to layout plan ki zarurat nahi hoti",False
-60,"Nahi, is scheme ke liye Aadhaar zaroori hai",False
-60,PAN card ki zaroorat nahi hai,True
-60,Bank account details,False
-60,Aadhaar number diya jana zaroori hai,False
-60,PAN card ki koi zaroorat nahi hai,True
+33,Post-Matric Scholarship ke liye family income limit 2.5 lakh rupees per year hai.,False
+33,"Agar parents ka annual income 2.5 lakh rupees se zyada hai, to aap Post-Matric Scholarship ke liye eligible nahi hain.",False
+34,Diploma students is scholarship ke liye apply kar sakte hain.,False
+34,Yeh scholarship post-matriculation or post-secondary courses ke liye di jaati hai.,False
+34,Diploma courses is scholarship mein include hain.,False
+34,Scholarship ke liye SC category se hona ek eligibility condition hai.,False
+34,Scholarship ke liye matriculation ya higher secondary pass hona ek eligibility condition hai.,False
+34,Scholarship ke liye income ceiling ke andar hona ek eligibility condition hai.,False
+35,Scholarship application ki last date ke bare mein context mein kuchh specifically mentioned nahi hai.,False
+35,State Governments/UT Administrations May-June mein scheme ki details announce karte hain.,False
+35,State Governments/UT Administrations May-June mein applications maangte hain.,False
+35,Aapko apne state government ki website dekhni chahiye taaki aapko application ki last date pata chal sake.,False
+35,Aapko apne state government dwara issue kiye gaye advertisements dekhne chahiye taaki aapko application ki last date pata chal sake.,False
+36,Context mein renewal application ki date ke bare mein koi information nahi hai.,False
+36,Context mein sirf eligibility criteria aur scheme ke baare mein bataya gaya hai.,False
+36,Context mein is sawal ka jawab nahi hai.,False
+37,Context mein is sawal ka jawab nahi hai.,False
+37,Context sirf documents ke baare mein batata hai.,False
+37,Context mein result aane ke time ke baare mein kuch nahi kehtha.,False
+38,Post-Matric scholarship mein milne wali amount alag-alag categories ke hisab se different hai.,False
+38,Post-Matric scholarship scheme mein maintenance allowance shamil hai.,False
+38,Post-Matric scholarship scheme mein fees shamil hai.,False
+38,Post-Matric scholarship scheme mein study tour charges shamil hai.,False
+38,Post-Matric scholarship scheme mein thesis typing/printing charges shamil hai.,False
+38,Post-Matric scholarship scheme mein book allowance shamil hai.,False
+38,Post-Matric scholarship scheme mein additional allowance for students with disabilities shamil hai.,False
+38,Group I ke liye maintenance allowance 1200 rupees per month hostellers ke liye hai.,False
+38,Group I ke liye maintenance allowance 550 rupees per month day scholars ke liye hai.,False
+38,Group II ke liye maintenance allowance 820 rupees per month hostellers ke liye hai.,False
+38,Group II ke liye maintenance allowance 530 rupees per month day scholars ke liye hai.,False
+38,Group III ke liye maintenance allowance 570 rupees per month hostellers ke liye hai.,False
+38,Group III ke liye maintenance allowance 300 rupees per month day scholars ke liye hai.,False
+38,Group IV ke liye maintenance allowance 380 rupees per month hostellers ke liye hai.,False
+38,Group IV ke liye maintenance allowance 230 rupees per month day scholars ke liye hai.,False
+39,Maintenance allowance amount course ke hisaab se alag hoti hai.,False
+39,"Group I, Group II, Group III aur Group IV courses ke liye maintenance allowance alag-alag hai.",False
+39,Maintenance allowance amount day scholars aur hostellers ke liye bhi alag hai.,False
+40,Hostel mein rehne wale students ko maintenance allowance milta hai.,False
+40,Maintenance allowance 400 se 1350 rupees per month tak ho sakta hai.,False
+41,"Scholarship amount direct bank account mein aata hai, college ko nahi jata.",False
+41,State Government/UT administrations ko instruction hai ki wo cash payment avoid karein.,False
+41,State Government/UT administrations ko instruction hai ki scholarship amount beneficiaries ke bank accounts mein directly transfer karein.,False
+42,Scholarship apply karne ke liye application form chahiye hoga.,False
+42,Scholarship apply karne ke liye passport size photo chahiye hoga.,False
+42,Scholarship apply karne ke liye certificates chahiye honge.,False
+42,Scholarship apply karne ke liye diploma chahiye hoga.,False
+42,Scholarship apply karne ke liye degree chahiye hoga.,False
+42,Scholarship apply karne ke liye caste certificate chahiye hoga.,False
+42,Scholarship apply karne ke liye income certificate chahiye hoga.,False
+42,Agar aap pehle se scholarship le rahe hain toh uska receipt bhi chahiye hoga.,False
+42,Scholarship application process mein sabse pehle application form bharna hota hai.,False
+42,Application form ke saath passport size photo lagani hoti hai.,False
+42,Application form ke saath certificates ki copies lagani hoti hain.,False
+42,Application form ke saath diploma ki copies lagani hoti hain.,False
+42,Application form ke saath degree ki copies lagani hoti hain.,False
+42,Agar aap SC category se hain toh caste certificate ki copy lagani hoti hai.,False
+42,Agar aap SC category se hain toh income certificate lagana hota hai.,False
+42,Agar aap pehle se scholarship le rahe hain toh uska receipt lagana hota hai.,False
+43,"Income certificate kis authority se banwana padta hai, iska context mein koi jankari nahi hai.",True
+43,Context mein sirf income certificate ki jarurat ke bare mein bataya gaya hai.,False
+43,Context mein yeh nahi bataya gaya hai ki income certificate kis authority se banwana padta hai.,True
+44,Caste certificate submit karna mandatory nahin hai.,True
+44,Category (SC/ST) ka information dena zaroori hai.,False
+45,"Ayushman Bharat ke liye bank passbook ki copy, PM/CM entitlement letter, Ration Card, aur Aadhaar Card ki zarurat pad sakti hai.",False
+45,PM-KISAN ke liye apply karte samay aapko apna Aadhaar number dena hoga.,False
+45,PM-KISAN ke liye apply karte samay aapko bank account details dena hoga.,False
+45,"PM-KISAN ke liye apply karte samay aapko Name, Age, Gender, Category (SC/ST) dena hoga.",False
+45,PM-KISAN ke liye apply karte samay mobile number optional hai.,False
+45,Post-Matric Scholarship ke liye aapko application form dena hoga.,False
+45,Post-Matric Scholarship ke liye aapko passport size photo dena hoga.,False
+45,Post-Matric Scholarship ke liye aapko certificates dena hoga.,False
+45,Post-Matric Scholarship ke liye aapko caste certificate dena hoga.,False
+45,Post-Matric Scholarship ke liye aapko income declaration dena hoga.,False
+46,PM Awas Yojana ke liye eligible beneficiaries hote hain jinke paas ghar nahi hai.,False
+46,PM Awas Yojana ke liye eligible beneficiaries hote hain jinke paas kachcha ya dilapidated ghar hai.,False
+46,PM Awas Yojana ke tahat EWS (Economically Weaker Section) category ke logon ko priority di jaati hai.,False
+46,PM Awas Yojana ke tahat anya eligible families bhi apply kar sakti hain.,False
+47,Jinke paas already pucca ghar hai wo eligible nahi hain.,False
+47,"Agar aapke paas pucca ghar hai lekin uska size 21 sqm se kam hai, to aap existing house ko enhance karne ke liye eligible ho sakte hain.",False
+48,EWS category ke liye income criteria hai.,False
+48,LIG category ke liye income criteria hai.,False
+48,EWS households ke liye annual income upto Rs. 3.00 lakhs hai.,False
+48,LIG households ke liye annual income Rs. 3.00 lakhs se Rs. 6.00 lakhs ke beech hai.,False
+49,Pradhan Mantri Awas Yojana (Urban) 2.0 scheme sirf shehri ilakon ke logo ke liye hai.,False
+49,Pradhan Mantri Awas Yojana (Urban) 2.0 scheme mein unhein affordable housing provide kiya jaata hai.,False
+49,Pradhan Mantri Awas Yojana (Urban) 2.0 scheme mein do models hain - ek public sector agencies dwara aur doosra private sector dwara.,True
+50,PM Awas Yojana ka launch 25th June 2015 ko hua tha.,False
+50,PM Awas Yojana ka target hai ki 2022 tak sab eligible beneficiaries ko pucca houses mil jayein.,False
+50,PM Awas Yojana ke context mein last date ke bare mein koi specific information nahi hai.,False
+51,Diye gaye context mein sirf PM-KISAN aur Post-Matric Scholarship ke bare mein jankari hai.,True
+51,Diye gaye context mein subsidy claim ke bare mein koi jankari nahi hai.,True
+51,Diye gaye context mein construction ke bare mein koi jankari nahi hai.,True
+51,Aapka sawal ka jawab dena mushkil hai kyunki yeh context se related nahi hai.,False
+52,Application status check karne ke liye koi specific time limit nahin di gayi hai.,False
+52,Ayushman Bharat ke liye aap online status check kar sakte hain https://mera.pmjay.gov.in/search/login par jakar.,False
+52,Baaki schemes ke liye koi specific information nahin hai.,False
+53,"PM Awas Yojana mein interest subsidy EWS/LIG, MIG-I aur MIG-II ke liye alag-alag hai.",False
+53,EWS/LIG ke liye PM Awas Yojana mein 6.5% interest subsidy milti hai.,False
+53,MIG-I ke liye PM Awas Yojana mein 4% interest subsidy milti hai.,False
+53,MIG-II ke liye PM Awas Yojana mein 3% interest subsidy milti hai.,False
+53,PM Awas Yojana mein subsidy loan amount aur carpet area ke aadhar par di jaati hai.,False
+54,EWS/LIG category ke liye interest subsidy 6.5% hai.,False
+54,MIG-I ke liye interest subsidy 4% hai.,False
+54,MIG-II ke liye interest subsidy 3% hai.,False
+54,EWS/LIG ke liye loan amount Rs. 6 lakh hai.,False
+54,MIG-I ke liye loan amount Rs. 9 lakh hai.,False
+54,MIG-II ke liye loan amount Rs. 12 lakh hai.,False
+55,"Yeh question PM Awas Yojana ke Credit Linked Subsidy Scheme (CLSS) ke bare mein hai, Ayushman Bharat ke bare mein nahi hai.",False
+55,PM Awas Yojana ke CLSS mein maximum loan amount jo cover hota hai wo Rs. 12 lakh tak hai.,False
+55,"Interest subsidy sirf Rs. 6 lakh, Rs. 9 lakh aur Rs. 12 lakh tak ke loan amount par milta hai.",False
+55,"CLSS mein subsidy EWS/LIG, MIG-I aur MIG-II categories ke hisab se alag-alag hai.",False
+56,Subsidy ek baar hi milti hai.,False
+56,Subsidy CNAs dwara PLIs ke disbursements ke aadhar par release hoti hai.,False
+56,"Jab PLI beneficiary ko loan deti hai, to CNA subsidy ko ek baar mein PLI ko release karti hai.",False
+56,PLI subsidy ko beneficiary ke account mein upfront credit karti hai.,False
+56,Beneficiary ko principal loan amount kam karke EMI deni hoti hai kyunki subsidy upfront credit hoti hai.,False
+57,PM Awas Yojana ke liye documents ke baare mein context mein kuchh specific jankari nahin hai.,True
+57,PM Awas Yojana mein female head of the family ko owner ya co-owner hone ki provision hai.,False
+57,"PM Awas Yojana ke application ke liye konsi documents chahiye, iske baare mein koi jankari nahin di gayi hai.",True
+58,"Income proof ke liye, agar aapke parents employed hain, toh unhe apne employer se income certificate lena hoga.",False
+58,"Agar aapke parents self-employed hain, toh unhe affidavit on non-judicial stamp paper par income declaration dena hoga.",False
+58,Self-employed parents ke income declaration mein unki income from all sources ka detail hona chahiye.,False
+59,"Property documents mein aapko ownership proof of land dena hota hai, jismein land ki malikiyat ko prove karna hota hai.",False
+59,Property documents mein aapko building plan of the house ki details deni hoti hai.,False
+59,Property documents mein aapko economic status ke bare mein details deni hoti hai.,False
+59,Property documents mein aapko eligibility ke bare mein details deni hoti hai.,False
+59,"Agar state/UT ne exemption di hai, to layout plan ki zarurat nahi hoti.",False
+60,Is scheme ke liye Aadhaar zaroori hai.,False
+60,Is scheme ke liye PAN card ki zaroorat nahi hai.,True
+60,Is scheme ke liye bank account details diya jana zaroori hai.,False
+60,Is scheme ke liye Aadhaar number diya jana zaroori hai.,False

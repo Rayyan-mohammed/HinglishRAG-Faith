@@ -1,7 +1,7 @@
 """End-to-end orchestration: retrieve, generate, decompose, verify, aggregate."""
 
 from config.settings import TOP_K
-from src.decomposition import decompose
+from src.decomposition import decompose_llm
 from src.generation import generate_answer
 from src.retrieval import retrieve
 from src.verification import verify_claim
@@ -18,7 +18,10 @@ def answer_question(question, index, passages, verify=True):
     }
 
     if verify:
-        claims = decompose(answer)
-        result["claims"] = [verify_claim(claim, index, passages) for claim in claims]
+        claims = decompose_llm(answer)
+        result["claims"] = [
+            verify_claim(claim, index, passages, context_passages=context_passages)
+            for claim in claims
+        ]
 
     return result

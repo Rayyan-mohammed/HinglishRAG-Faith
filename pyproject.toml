@@ -6,7 +6,6 @@ authors = [{ name = "Rayyan Mohammed" }]
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "groq",
     "sentence-transformers",
     "faiss-cpu",
     "pandas",
@@ -16,6 +15,7 @@ dependencies = [
     "pypdf>=6.16.1",
     "streamlit>=1.61.1",
     "matplotlib>=3.10.0",
+    "anthropic>=1.4.0",
 ]
 
 [dependency-groups]

@@ -3,24 +3,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 
-# Optional additional keys (e.g. from separate accounts) so a long batch run can fail over
-# to another key's quota instead of waiting out one key's daily limit -- see P-001/P-008.
-# Add GROQ_API_KEY_2, GROQ_API_KEY_3, ... to .env; only non-empty ones are used.
-GROQ_API_KEYS = [
-    k
-    for k in [
-        GROQ_API_KEY,
-        os.environ.get("GROQ_API_KEY_2"),
-        os.environ.get("GROQ_API_KEY_3"),
-        os.environ.get("GROQ_API_KEY_4"),
-    ]
-    if k
-]
-
-GENERATOR_MODEL = "openai/gpt-oss-120b"
-VERIFIER_MODEL = "openai/gpt-oss-120b"
+# Switched from Groq (openai/gpt-oss-120b) to Claude in ADR-021 -- Groq's 200k-tokens/day
+# free-tier ceiling repeatedly paused full evaluation runs across several days, even with the
+# multi-key failover ADR-016 added for it. Haiku 4.5 is cheap enough for this workload's volume
+# (a few hundred short classification-shaped calls) to cost well under a dollar.
+GENERATOR_MODEL = "claude-haiku-4-5"
+VERIFIER_MODEL = "claude-haiku-4-5"
+DECOMPOSER_MODEL = "claude-haiku-4-5"
 EMBEDDING_MODEL = "BAAI/bge-m3"
 
 SCHEMES_DIR = "data/schemes"

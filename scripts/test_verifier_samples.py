@@ -1,5 +1,5 @@
 """Week 1 (B1): sanity-check the verifier prompt on 5 hand-written claim/evidence pairs.
-Needs a real GROQ_API_KEY in .env to run."""
+Needs a real ANTHROPIC_API_KEY in .env to run."""
 
 import sys
 from pathlib import Path

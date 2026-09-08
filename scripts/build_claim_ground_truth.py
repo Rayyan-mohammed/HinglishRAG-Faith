@@ -18,33 +18,43 @@ OUTPUT = "eval/claim_ground_truth.csv"
 
 # (question_id, distinctive substring of the claim) for every claim independently confirmed
 # hallucinated (contradicted by or absent from the source facts) on a claim-by-claim re-check.
-# Everything else -- including claims in the other 12 flagged answers whose problem turned out
+# Everything else -- including claims in the other 7 flagged answers whose problem turned out
 # to be relevance/completeness rather than a false individual claim -- is not hallucinated.
+#
+# Rewritten in ADR-021 to match Claude's decomposition wording (Groq's gpt-oss-120b produced
+# different claim text, including some fragmented compound claims that Claude decomposes more
+# cleanly). Re-derived from eval/labels.csv's per-question notes -- the underlying facts these
+# markers point at are unchanged from before the model switch, only the exact claim strings are
+# new. Where Claude's cleaner decomposition separates a true sub-fact from a false one that the
+# old fragmented decomposition had bundled together (e.g. Q24, Q49), only the genuinely false
+# part is marked here -- see ADR-021 for the specific reasoning per question.
+# Q2/Q3/Q30 markers below were re-checked a second time after a follow-up re-run (still ADR-021,
+# hybrid-evidence version): decompose_llm() is itself not perfectly stable claim-to-claim across
+# runs on identical input -- Q2's first claim dropped a "nahin" (negation) this run, flipping it
+# from the original hallucinated denial ("PM-KISAN is NOT only for landowners") into a literal
+# true statement ("PM-KISAN IS only for landowners"), so it's correctly excluded from this list
+# even though the same underlying sentence was hallucinated last run. Q30's three separate
+# wrong-scheme document claims got bundled into one this run. Ground truth here tracks the claim
+# text as actually decomposed, not the original answer's intent -- a claim-level verifier can
+# only be graded against the claims it's actually asked to check.
 HALLUCINATED_MARKERS = [
-    (2, "Nahin, PM-KISAN scheme sirf un kisano ke liye nahin hai jinke paas apni zameen hai"),
-    (2, "ismein kya kiraye ki zameen wale apply kar sakte hain"),
-    (2, "yeh nahin bataya gaya hai ki kiraye ki zameen wale"),
-    (3, "Arre, yeh to context mein clearly nahi likha hai"),
-    (3, "exclusion criteria ke baare mein kuch nahi likha hai"),
+    (2, "yeh jankari nahin di gayi hai ki kiraye ki zameen wale apply kar sakte hain"),
+    (2, "yeh nahin bataya gaya hai ki kiraye ki zameen wale ismein shaamil hain ya nahin"),
+    (3, "Context mein clearly nahi likha hai ki government employee hone se PM-KISAN ka fayda milta hai ya nahi"),
+    (3, "PM-KISAN ke exclusion criteria ke baare mein context mein kuch nahi likha hai"),
     (10, "sabhi states ke kisano ke liye amount same hai"),
-    (24, "diya gaya context iska jawaab nahin deta"),
-    (24, "Diye gaye context mein sirf Ayushman Bharat ke udeshya"),
-    (24, "iske bare mein koi jaankari nahin hai ki yeh cover ek baar"),
-    (30, "Driving Licence, Voters' ID Card, NREGA Job Card"),
-    (43, "Income certificate kis authority se banwana padta hai, iska context"),
-    (43, "Context mein sirf income certificate ki jarurat"),
-    (43, "yeh nahi bataya gaya hai ki kis authority se banwana padta hai"),
-    (44, "Nahin, caste certificate submit karna mandatory nahin hai"),
-    (49, "Is scheme mein do models hain - ek public sector agencies dwara"),
-    (49, "doosra private sector dwara"),
-    (51, "aapka sawal mere paas diye gaye context se related nahi hai"),
-    (51, "Diye gaye context me sirf PM-KISAN"),
-    (51, "Post-Matric Scholarship ke bare me jankari hai"),
-    (51, "subsidy claim ya construction ke bare me koi jankari nahi hai"),
+    (24, "jaankari nahin hai ki Ayushman Bharat cover ek baar ke liye hai ya har saal renew hota hai"),
+    (30, "Driving Licence, Voters' ID Card, NREGA Job Card submit karne pad sakte hain"),
+    (43, "Income certificate kis authority se banwana padta hai, iska context mein koi jankari nahi hai"),
+    (43, "Context mein yeh nahi bataya gaya hai ki income certificate kis authority se banwana padta hai"),
+    (44, "Caste certificate submit karna mandatory nahin hai"),
+    (49, "Pradhan Mantri Awas Yojana (Urban) 2.0 scheme mein do models hain"),
+    (51, "Diye gaye context mein sirf PM-KISAN aur Post-Matric Scholarship ke bare mein jankari hai"),
+    (51, "Diye gaye context mein subsidy claim ke bare mein koi jankari nahi hai"),
+    (51, "Diye gaye context mein construction ke bare mein koi jankari nahi hai"),
     (57, "PM Awas Yojana ke liye documents ke baare mein context mein kuchh specific jankari nahin hai"),
     (57, "application ke liye konsi documents chahiye, iske baare mein koi jankari nahin di gayi hai"),
-    (60, "PAN card ki zaroorat nahi hai"),
-    (60, "PAN card ki koi zaroorat nahi hai"),
+    (60, "Is scheme ke liye PAN card ki zaroorat nahi hai"),
 ]
 
 
