@@ -30,12 +30,14 @@ repo, not just asserted in prose.
 - `verifier_results.pre-adr019.csv.bak` — the complete, single-sample ADR-018 baseline (209 rows,
   precision 0.24/recall 0.67), kept from before ADR-019's data split and ADR-020's majority-vote
   judging. What ADR-019's and ADR-020's before/after comparisons used.
+- `verifier_results.pre-adr021.csv.bak` — the complete Groq/majority-vote ADR-020 result (209 rows,
+  precision 0.25/recall 0.67), kept from before ADR-021's switch to Claude, LLM decomposition, and
+  hybrid evidence retrieval. What ADR-021's before/after comparison used.
 
-**Current state of `verifier_results.csv` (see ADR-019/ADR-020): complete.** All 209 claims judged
-with ADR-020's `n_samples=3` majority vote against the post-ADR-019 index (197 facts). Getting here
-took two calendar days and several resume cycles — the run paused once on Groq's daily token quota
-(majority voting triples API cost) and again on a low-free-RAM DLL failure loading the embedding
-model, both handled by the script's existing resumability, no code changes needed. Final numbers
-(precision 0.25, recall 0.67, strict catch rate 0.44) are reported throughout the project's docs.
+**Current state of `verifier_results.csv` (see ADR-021): complete.** 244 claims (decomposed by
+`decompose_llm()`, judged by Claude with `n_samples=3` majority vote against a hybrid evidence pool
+— generation's context passages merged with a fresh per-claim retrieval). Final numbers (precision
+0.27, recall 0.71, false positives 32, false negatives 5) are the best precision and recall
+simultaneously recorded anywhere in this project's history, and are reported throughout the docs.
 
 These are deliverables, not scratch output — commit them once they're produced, don't gitignore.

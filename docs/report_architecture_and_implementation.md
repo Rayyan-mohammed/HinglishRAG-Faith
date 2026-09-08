@@ -16,11 +16,11 @@ flowchart TD
 
     Q(["User question (Hinglish)"]) --> S1["1. Retrieval"]
     Index --> S1
-    S1 --> S2["2. Generation<br/>(Groq LLM)"]
-    S2 --> S3["3. Claim decomposition"]
-    S3 --> S4["4. Per-claim retrieval"]
+    S1 --> S2["2. Generation<br/>(Claude)"]
+    S2 --> S3["3. Claim decomposition<br/>(Claude)"]
+    S3 --> S4["4. Per-claim retrieval<br/>(+ generation context)"]
     Index --> S4
-    S4 --> S5["5. Verification<br/>(Groq LLM-as-judge)"]
+    S4 --> S5["5. Verification<br/>(Claude LLM-as-judge)"]
     S5 --> S6["6. Aggregation"]
     S2 --> S6
     S6 --> Out(["Answer with claims tagged<br/>supported / contradicted / unverifiable"])
@@ -75,43 +75,56 @@ embedded directly with no chunking step.
 A single prompt instructs the model to answer in Hinglish, grounded only in the given context, and
 to say so plainly rather than guess when the context doesn't answer the question. Originally
 Groq's `llama-3.3-70b-versatile`; mid-Week-3 Groq removed that model from its catalog entirely
-with no warning, breaking every generation and verification call project-wide. Both
-`GENERATOR_MODEL` and `VERIFIER_MODEL` were swapped to `openai/gpt-oss-120b` after testing it (and
-a smaller/reasoning alternative) for Hinglish fluency and, separately, strict-JSON compliance on
-the verifier prompt (P-003) — the same-model-for-both-roles decision from ADR-001 was kept, not
-revisited, since nothing about the failure was specific to one role.
+with no warning, breaking every generation and verification call project-wide, then swapped to
+`openai/gpt-oss-120b` (P-003). Switched again post-submission, this time off Groq entirely, to
+Claude (`claude-haiku-4-5`) after Groq's free-tier daily quota repeatedly paused full evaluation
+runs across several days even with multi-key failover (ADR-021) — the same-model-for-all-roles
+decision from ADR-001 was kept through both switches, since nothing about either failure was
+specific to one role.
 
 ### Claim decomposition (`src/decomposition.py`)
 
-Rule-based: split on sentence boundaries, then further split each sentence on a fixed Hinglish/
-English connector-word list (`aur`, `lekin`, `but`, `however`, ...) — deliberately not a trained
-parser, since a full linguistic parser is unnecessary engineering at this scope (ADR-003).
-Two real bugs surfaced testing this against actual generated output rather than only
-hand-written samples: an abbreviation like "Rs." was being read as a sentence boundary
-(fixed directly, with a regression test — P-002), and splitting on "aur" inside a compound subject
-or a qualifier like "only X and Y" produces individually-true fragments that lose the original
-claim's meaning (left as a documented, tested limitation — ADR-003, revisited in
-`docs/error_analysis.md` as a concrete cause of 2 of the verifier's 6 false negatives). The
-abbreviation case had a safe, unambiguous fix with no test asserting the broken behavior; the
-connector case already had one, which is why it wasn't touched.
+Two implementations now exist. The original is rule-based: split on sentence boundaries, then
+further split each sentence on a fixed Hinglish/English connector-word list (`aur`, `lekin`,
+`but`, `however`, ...) — deliberately not a trained parser at first, since a full linguistic
+parser looked like unnecessary engineering at that scope (ADR-003). Two real bugs surfaced testing
+this against actual generated output rather than only hand-written samples: an abbreviation like
+"Rs." was being read as a sentence boundary (fixed directly, with a regression test — P-002), and
+splitting on "aur" inside a compound subject or a qualifier like "only X and Y" produces
+individually-true fragments that lose the original claim's meaning (left as a documented, tested
+limitation at the time — ADR-003). `decompose()` is kept (still tested, zero API cost) but is no
+longer the pipeline's actual decomposition step — `decompose_llm()` replaced it in ADR-021,
+targeting exactly the qualifier-dropping and claim-bundling bugs above via an LLM prompt instead
+of pattern rules, verified directly against both cases (and a true-exclusivity case that an
+earlier prompt draft got wrong) before rollout. `decompose_llm()` falls back to `decompose()` on a
+malformed or empty LLM response.
 
 ### Per-claim retrieval and verification (`src/retrieval.py`, `src/verification.py`)
 
-Each claim is re-embedded and re-queried against the same index (`verify_claim()`, `top_k=2` by
-default), and the LLM-judge (`judge()`) is prompted to return strict JSON —
-`{"verdict": ..., "confidence": ...}` — for the claim against its retrieved evidence text, at
-temperature 0. `temperature=0` does not actually make the judge deterministic in practice —
-P-008 first noticed run-to-run verdict drift on identical input, and ADR-019 confirmed it directly
+`verify_claim()` builds each claim's evidence pool from two sources merged and deduplicated: the
+passages generation actually retrieved for the question (`context_passages`) and a fresh
+`retrieve()` call scoped to the claim's own text. This replaced two earlier, simpler designs in
+turn (ADR-021): plain per-claim retrieval alone (the original design) let a short, scheme-ambiguous
+claim's own retrieval pull in wrong-scheme evidence — the single largest diagnosed false-positive
+cause; context-passages-alone (tried first as the fix) solved that but tied verification's blind
+spots to generation's, so a fact generation's retrieval missed was invisible to verification too,
+confirmed directly by reading `evidence_text` for the resulting false negatives — the merge keeps
+both properties. The LLM-judge (`judge()`) is prompted to return strict JSON —
+`{"verdict": ..., "confidence": ...}` — for the claim against its evidence text. `temperature=0`
+was used with Groq but does not actually make the judge deterministic in practice — P-008 first
+noticed run-to-run verdict drift on identical input, and ADR-019 confirmed it directly
 (byte-identical evidence text produced a different verdict on 12 of 20 changed claims across two
-runs). `verify_claim()` now judges each claim `n_samples=3` times and takes the majority verdict
-(ADR-020), falling back to UNVERIFIABLE on a full 3-way split, to reduce how much a single unlucky
-sample can move the measured result. `judge()` and `verify_claim()` were split apart early
-(ADR-010) so the verifier prompt could be tested on 5 hand-written claim/evidence pairs before any
-retrieval index existed — `judge()` itself is still the single-call primitive used for that kind of
-direct prompt testing; only `verify_claim()` does the majority-vote sampling. Running this at full
-scale (~210 claims across 60 answers) needed two kinds of resilience neither showed up in
-small-scale testing: retrying through Groq's short-burst tokens-per-minute limit with exponential
-backoff, and separately, making every batch-driving script resumable to survive Groq's much longer
+runs); the Claude SDK version in use has since removed `temperature` from the API entirely.
+`verify_claim()` judges each claim `n_samples=3` times and takes the majority verdict (ADR-020),
+falling back to UNVERIFIABLE on a full 3-way split, to reduce how much a single unlucky sample can
+move the measured result. `judge()` and `verify_claim()` were split apart early (ADR-010) so the
+verifier prompt could be tested on 5 hand-written claim/evidence pairs before any retrieval index
+existed — `judge()` itself is still the single-call primitive used for that kind of direct prompt
+testing; only `verify_claim()` does the evidence-merging and majority-vote sampling. Running this
+at full scale (~210-244 claims across 60 answers) needed resilience that didn't show up in
+small-scale testing: on Groq, retrying through its short-burst tokens-per-minute limit with
+exponential backoff, and separately, making every batch-driving script resumable to survive its
+much longer
 daily-quota limit, since both were hit repeatedly across Weeks 2–4 (P-001, P-005) — and again after
 majority voting tripled per-claim API cost (ADR-020).
 
@@ -143,13 +156,13 @@ live-reload workflow to protect anyway.
 | Component | Choice | Why |
 |---|---|---|
 | Language | Python | Matches blueprint Section 15 |
-| Generator + verifier | Groq API, `openai/gpt-oss-120b` | Free tier, fast, no GPU; swapped from `llama-3.3-70b-versatile` after Groq removed it (P-003) |
+| Generator + decomposer + verifier | Anthropic API, `claude-haiku-4-5` | Switched from Groq's `openai/gpt-oss-120b` (ADR-021) after its free-tier daily quota repeatedly blocked full evaluation runs; workload cost is well under $1 on Haiku's pricing |
 | Embeddings | `BAAI/bge-m3`, local | Free, pretrained, handles Hindi-English mixed text without fine-tuning |
-| Vector store | FAISS (`faiss-cpu`), local, in-memory | No server needed at 183-fact scale |
-| Claim decomposition | Rule-based Python | Transparent, debuggable, sufficient at this scope |
+| Vector store | FAISS (`faiss-cpu`), local, in-memory | No server needed at ~196-fact scale |
+| Claim decomposition | LLM-based (`decompose_llm()`), rule-based Python as fallback | LLM handles qualifier-preservation and claim-bundling correctly where fixed rules couldn't (ADR-021); rule-based path kept for zero-cost, deterministic use and as a safety net |
 | Demo | Streamlit | Fastest framework to wire to the existing pipeline function |
 | Dependency management | `uv` + `pyproject.toml` | Reproducible lockfile, single tool for venv + deps + running scripts |
-| Testing | `pytest` (14 tests, `tests/`) | Covers decomposition edge cases and evaluation math |
+| Testing | `pytest` (16 tests, `tests/`) | Covers decomposition edge cases and evaluation math |
 
 No component was trained or fine-tuned — every model is pretrained and reused as-is, matching the
 blueprint's explicit out-of-scope statement.
@@ -215,6 +228,18 @@ story rather than duplicated:
   cycles, hitting both Groq's daily quota (majority voting triples API cost) and a low-free-RAM
   DLL failure loading the embedding model — both survived by the existing resumable-script
   design, no new code needed.
+- **ADR-021** — a third post-submission cycle, and the first to move precision and recall
+  together. Switched Groq → Claude (Haiku 4.5) after its daily quota kept blocking full runs;
+  replaced the regex decomposition with an LLM-based one (`decompose_llm()`), fixing
+  qualifier-dropping and claim-bundling bugs at the root; and changed `verify_claim()`'s evidence
+  pool from context-passages-only (tried first, regressed recall 0.67→0.50 by tying
+  verification's blind spots to generation's) to a hybrid merge of context passages and a fresh
+  per-claim retrieval. While diagnosing that regression, found and fixed a real data-corruption
+  bug in `PM-KISAN.csv` (a row titled "exclusion criteria" had a mismatched body, sourced from
+  the same malformed PDF as P-007). **Final: precision 0.27, recall 0.71, false positives 32,
+  false negatives 5** — the best precision and recall recorded simultaneously anywhere in the
+  project, at the cost of a lower answer-level catch rate (an expected side effect of fewer false
+  positives, not a new problem).
 - **P-007** — a malformed source PDF silently corrupted two figures in the scraped knowledge base;
   caught by chance during manual testing, which is itself evidence that the scraped-not-authored
   knowledge base needed (and didn't get, beyond one spot-check) systematic verification against
@@ -225,10 +250,14 @@ story rather than duplicated:
 - The knowledge base is scraped from live `.gov.in` sources with heuristic parsing, not hand
   -authored or exhaustively verified — P-007 shows this can silently introduce wrong facts that
   every downstream stage then treats as ground truth.
-- Claim decomposition is rule-based and has known, documented failure modes on compound and
-  qualifier-bearing sentences (ADR-003) that a trained parser would likely avoid, traded
-  deliberately for transparency and debuggability at this project's scope.
-- Generator and verifier share one model and one API key; a transient Groq catalog or quota
-  change affects both roles simultaneously, as P-003 demonstrated.
+- Claim decomposition's rule-based path (`decompose()`, still the tested fallback) has known,
+  documented failure modes on compound and qualifier-bearing sentences (ADR-003) — the LLM-based
+  path (`decompose_llm()`) fixes the specific cases it was tested against, but isn't itself
+  perfectly stable run to run on identical input (ADR-021 found a negation dropped between two
+  runs on the same source answer).
+- Generator, decomposer, and verifier share one model and one API key; a provider-side outage or
+  quota/catalog change affects all three roles simultaneously, as P-003 demonstrated when this
+  happened on Groq (the project has since switched providers once already, ADR-021, for exactly
+  this class of reliability problem).
 - See `docs/report_evaluation_and_results.md` for evaluation-side limitations (ground truth
   provenance, sample size, retrieval/verification entanglement).

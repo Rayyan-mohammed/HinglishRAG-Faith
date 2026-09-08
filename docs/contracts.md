@@ -7,8 +7,7 @@ changes — it's the source of truth for how A's and B's code plug together.
 
 | Var | Required | Used by |
 |---|---|---|
-| `GROQ_API_KEY` | yes | `src/generation.py`, `src/verification.py` |
-| `GROQ_API_KEY_2`, `_3`, `_4` | no | Optional extra keys (separate accounts) for automatic failover on a daily-quota rate limit — see `judge()` in `src/verification.py` and P-008 |
+| `ANTHROPIC_API_KEY` | yes | `src/generation.py`, `src/decomposition.py`, `src/verification.py` — switched from Groq to Claude in ADR-021 |
 
 ## Passage format
 
@@ -26,19 +25,20 @@ Returned by retrieval, consumed by generation and verification.
 - `retrieve(query: str, index, passages, top_k: int) -> list[passage]`
 
 ### `src/generation.py`
-- `generate_answer(question: str, passages: list[passage]) -> str` — Hinglish answer, grounded only in given passages.
+- `generate_answer(question: str, passages: list[passage]) -> str` — Hinglish answer, grounded only in given passages. Calls Claude (`GENERATOR_MODEL`, currently `claude-haiku-4-5`) via `get_client()` — switched from Groq in ADR-021.
 
 ### `src/decomposition.py`
-- `decompose(answer: str) -> list[str]` — atomic claims, order preserved.
+- `decompose(answer: str) -> list[str]` — regex-based atomic claims, order preserved. Deterministic, zero API cost, still the direct target of `tests/test_decomposition.py`. No longer the pipeline's actual decomposition step (see `decompose_llm()` below) but kept as the fallback when an LLM decomposition call fails or returns malformed output.
+- `decompose_llm(answer: str) -> list[str]` — LLM-based decomposition, the pipeline's actual step as of ADR-021. Calls Claude (`DECOMPOSER_MODEL`) to extract atomic, self-contained claims, preserving exclusivity qualifiers ("sirf"/"only" over a list) as one claim rather than splitting them. Falls back to `decompose()` if the response isn't valid JSON, isn't a list, or comes back empty.
 
 ### `src/verification.py`
-- `judge(claim: str, evidence_text: str) -> dict` — core LLM-as-judge call, no retrieval. Used directly for prompt testing on hand-written claim/evidence pairs.
+- `judge(claim: str, evidence_text: str) -> dict` — core LLM-as-judge call, no retrieval. Used directly for prompt testing on hand-written claim/evidence pairs. Calls Claude (`VERIFIER_MODEL`) — switched from Groq in ADR-021.
   ```python
   {"verdict": "SUPPORTED" | "CONTRADICTED" | "UNVERIFIABLE",
    "confidence": float,        # 0.0-1.0
    "claim": str}
   ```
-- `verify_claim(claim: str, index, passages, top_k=2, n_samples=3) -> dict` — retrieves evidence, then calls `judge()` `n_samples` times independently and returns the majority verdict (confidence averaged over the agreeing samples; a full split with no majority falls back to UNVERIFIABLE). Same shape as above plus `"evidence": list[passage]`. Added in ADR-020 after confirming `judge()` isn't fully deterministic even at `temperature=0`.
+- `verify_claim(claim: str, index, passages, top_k=2, n_samples=3, context_passages=None) -> dict` — builds an evidence pool, then calls `judge()` `n_samples` times independently and returns the majority verdict (confidence averaged over the agreeing samples; a full split with no majority falls back to UNVERIFIABLE). Same shape as above plus `"evidence": list[passage]`. Majority voting added in ADR-020 after confirming `judge()` isn't fully deterministic even at `temperature=0`. If `context_passages` is given (the passages that generated this claim's answer), the evidence pool is those passages **merged with** a fresh `retrieve(claim, ...)` call, deduplicated (ADR-021) — context-passages-only was tried first but tied verification's blind spots to generation's; falls back to `retrieve()` alone when `context_passages` isn't supplied at all.
 
 ### `src/pipeline.py`
 - `answer_question(question: str, index, passages, verify=True) -> dict`
@@ -102,7 +102,7 @@ documents.
 | `pipeline` | str | always `plain` |
 | `answer` | str | raw generated text |
 
-### `results/verifier_results.csv` — built (B3), 212 rows, one per decomposed claim across all 60 answers
+### `results/verifier_results.csv` — built (B3), 244 rows, one per decomposed claim across all 60 answers
 | column | type | notes |
 |---|---|---|
 | `question_id` | int | joins to `generated_answers.csv` and `questions.csv` |

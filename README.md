@@ -21,11 +21,11 @@ flowchart TD
 
     Q(["User question (Hinglish)"]) --> S1["1. Retrieval"]
     Index --> S1
-    S1 --> S2["2. Generation<br/>(Groq LLM)"]
-    S2 --> S3["3. Claim decomposition"]
-    S3 --> S4["4. Per-claim retrieval"]
+    S1 --> S2["2. Generation<br/>(Claude)"]
+    S2 --> S3["3. Claim decomposition<br/>(Claude)"]
+    S3 --> S4["4. Per-claim retrieval<br/>(+ generation context)"]
     Index --> S4
-    S4 --> S5["5. Verification<br/>(Groq LLM-as-judge)"]
+    S4 --> S5["5. Verification<br/>(Claude LLM-as-judge)"]
     S5 --> S6["6. Aggregation"]
     S2 --> S6
     S6 --> Out(["Answer with claims tagged<br/>supported / contradicted / unverifiable"])
@@ -36,10 +36,10 @@ flowchart TD
 | Component | What it does | Implementation |
 |---|---|---|
 | Retrieval | Embeds the question and finds the closest passages in the scheme documents | `src/retrieval.py` — bge-m3 + FAISS flat index |
-| Generation | Answers the question in Hinglish, grounded only in retrieved passages | `src/generation.py` — Groq `openai/gpt-oss-120b` (see P-003) |
-| Claim decomposition | Splits the generated answer into atomic, independently-checkable claims | `src/decomposition.py` — sentence + connector-word rules |
-| Per-claim retrieval | Re-retrieves evidence specific to each individual claim | `src/retrieval.py`, called per claim in `src/verification.py` |
-| Verification | Judges each claim against its evidence: supported / contradicted / unverifiable, with a confidence score | `src/verification.py` — Groq `openai/gpt-oss-120b` as LLM-as-judge, JSON output |
+| Generation | Answers the question in Hinglish, grounded only in retrieved passages | `src/generation.py` — Claude Haiku 4.5 (switched from Groq in ADR-021) |
+| Claim decomposition | Splits the generated answer into atomic, independently-checkable claims | `src/decomposition.py` — `decompose_llm()` (Claude), falls back to a regex sentence/connector-word splitter |
+| Per-claim retrieval | Builds each claim's evidence pool: generation's context passages merged with a fresh per-claim retrieval | `src/retrieval.py`, called per claim in `src/verification.py` (ADR-021) |
+| Verification | Judges each claim against its evidence: supported / contradicted / unverifiable, with a confidence score, by majority vote over 3 samples | `src/verification.py` — Claude Haiku 4.5 as LLM-as-judge, JSON output |
 | Aggregation | Combines per-claim verdicts back into the answer for display | `src/pipeline.py` |
 
 See [`docs/contracts.md`](docs/contracts.md) for exact function signatures and data formats.
@@ -48,7 +48,7 @@ See [`docs/contracts.md`](docs/contracts.md) for exact function signatures and d
 
 ```
 uv sync
-cp .env.example .env   # add your Groq API key
+cp .env.example .env   # add your Anthropic API key
 ```
 
 Fetch the scheme facts dataset live from official `.gov.in` sources (writes one CSV per scheme
@@ -89,33 +89,36 @@ docs/           planning docs, decision log, contracts, per-phase notes, error a
 
 ## Results
 
-60 questions, 209 decomposed claims, 24 ground-truth hallucinated (claim-level). Every one of
+60 questions, 244 decomposed claims, 17 ground-truth hallucinated (claim-level). Every one of
 the 18 non-fully_correct answers reaches the plain (unverified) baseline unflagged — the verified
 pipeline's whole value is in the columns below. Ground truth is an AI-drafted first pass, pending
 human review (ADR-012, ADR-014) — read `docs/report_evaluation_and_results.md` before quoting
 these numbers anywhere.
 
-These are the numbers **after six fixes across three rounds** (ADR-015, ADR-018, then
-ADR-019/020): splitting oversized knowledge-base rows (across two rounds — Post-Matric
-Scholarship first, then PM-KISAN and PM Awas Yojana's remaining offenders), filtering out
-degenerate decomposition fragments, adding explicit verifier-prompt handling for claims that
-describe an absence of information, and majority-vote judging (3 independent LLM-judge calls per
-claim) to reduce measured-score noise from a confirmed non-deterministic judge. The absence-claim
-fix initially, verified correct in isolation, still **regressed recall (0.71→0.42)** once
-retrieval (deliberately left unfixed — a real question isn't pre-labeled with its scheme) fed it
-wrong-scheme evidence (ADR-017); rather than reverting, the same instruction was repaired to check
-topical relevance before trusting an absence reading (ADR-018), recovering to precision 0.24 /
-recall 0.67. Extending the row-splitting fix and adding majority-vote judging (ADR-019/020) left
-claim-level precision/recall essentially flat (0.25/0.67) — a wash, not a further win, disclosed
-plainly rather than framed as progress it didn't make.
+These are the numbers **after seven fixes across four rounds** (ADR-015, ADR-018, ADR-019/020,
+then ADR-021): splitting oversized knowledge-base rows, filtering degenerate decomposition
+fragments, adding and then repairing absence-claim prompt handling, majority-vote judging, and
+finally — after switching from Groq to Claude to escape Groq's repeatedly-blocking daily quota —
+LLM-based decomposition, hybrid evidence retrieval (generation's context passages merged with a
+fresh per-claim lookup, so verification isn't blind to whatever generation happened to retrieve),
+and a genuine data-corruption fix in `PM-KISAN.csv`. The absence-claim fix initially, verified
+correct in isolation, still **regressed recall (0.71→0.42)** once retrieval (deliberately left
+unfixed — a real question isn't pre-labeled with its scheme) fed it wrong-scheme evidence
+(ADR-017); rather than reverting, the same instruction was repaired to check topical relevance
+before trusting an absence reading (ADR-018), recovering to precision 0.24 / recall 0.67.
+Extending the row-splitting fix and adding majority-vote judging (ADR-019/020) left claim-level
+precision/recall essentially flat (0.25/0.67) — reported honestly as a wash, not framed as
+progress it didn't make. The Claude switch and hybrid-retrieval fix (ADR-021) is the first round
+since the original baseline to move precision *and* recall together: **0.27 / 0.71**, the best
+simultaneous result recorded in this project.
 
 | Metric | Value |
 |---|---|
-| Recall on hallucinated claims | 0.67 |
-| Precision on flagged claims | 0.25 |
-| Answer-level catch rate (strict) | 0.44 |
-| Answer-level catch rate (loose) | 0.72 |
-| False-alarm rate on correct answers | 0.48 |
+| Recall on hallucinated claims | 0.71 |
+| Precision on flagged claims | 0.27 |
+| Answer-level catch rate (strict) | 0.39 |
+| Answer-level catch rate (loose) | 0.50 |
+| False-alarm rate on correct answers | 0.40 |
 
 ![Results chart](docs/figures/results_chart.png)
 
@@ -134,13 +137,16 @@ specifically got missed or over-flagged, and the full regression story is in
 
 ## Project status
 
-**All 24 tasks across both tracks and all 4 weeks are done**, plus two post-submission fix cycles
-that together shipped six fixes, hit a real regression along the way, diagnosed it precisely
-instead of guessing, repaired it rather than reverting, then discovered the LLM judge itself isn't
-fully deterministic and added majority-vote judging to address that directly (ADR-015 through
-ADR-020 — see Status log below). The second cycle landed roughly flat on claim-level
-precision/recall relative to the first — reported honestly as a wash, not spun as further
-progress.
+**All 24 tasks across both tracks and all 4 weeks are done**, plus three post-submission fix
+cycles that together shipped seven fixes, hit a real regression along the way, diagnosed it
+precisely instead of guessing, repaired it rather than reverting, discovered the LLM judge itself
+isn't fully deterministic and added majority-vote judging to address that directly, then switched
+the underlying model (Groq → Claude, ADR-021) after Groq's daily quota repeatedly blocked full
+runs — which also surfaced and fixed a genuine data-corruption bug and a retrieval design flaw
+along the way (ADR-015 through ADR-021 — see Status log below). The second cycle (ADR-019/020)
+landed roughly flat on claim-level precision/recall — reported honestly as a wash, not spun as
+progress. The third (ADR-021) is the first round since the original baseline to move precision
+*and* recall together, landing at the best simultaneous result recorded in the project.
 Verified, not assumed: full test suite passes (`uv run python -m pytest`, 16 tests), and the
 complete pipeline was run live
 end-to-end (retrieval → Hinglish generation → decomposition → per-claim verification) as a final
@@ -254,7 +260,27 @@ precision 0.25, recall 0.67, false positives 49, false-alarm rate 0.48** — cla
 essentially flat versus ADR-018, though answer-level catch rate dipped slightly (strict 0.50→0.44,
 loose 0.78→0.72) despite identical true/false-negative counts, because which specific claims got
 caught shifted between runs. Reported as a wash, not a further improvement — full account in
-ADR-019/ADR-020 (`docs/problems_and_decisions.md`); results above reflect this final, reported
+ADR-019/ADR-020 (`docs/problems_and_decisions.md`).
+
+Third post-submission fix cycle (ADR-021): switched `src/generation.py`, `src/decomposition.py`,
+and `src/verification.py` from Groq to Claude (Haiku 4.5) after Groq's daily quota repeatedly
+paused full runs across several days. Along with the switch: LLM-based decomposition
+(`decompose_llm()`) replacing the regex splitter as the pipeline's actual step, fixing
+qualifier-dropping and claim-bundling bugs at the root; and a hybrid evidence-retrieval design in
+`verify_claim()` that merges the passages generation actually retrieved with a fresh per-claim
+lookup. The context-passages-only version was tried first and initially regressed recall
+(0.67→0.50) — diagnosed directly by reading evidence text: it tied verification's blind spots to
+generation's, so a fact generation's retrieval missed was invisible to verification too, even
+when it existed elsewhere in the corpus. Fixed (not reverted) by merging in a fresh per-claim
+retrieval alongside the context passages. While diagnosing this, found and fixed a genuine data
+corruption bug in `PM-KISAN.csv` — a row titled "exclusion criteria" had a mismatched body text
+duplicating a different fact, sourced from the same malformed PDF P-007 already flagged. **Final
+result: precision 0.27, recall 0.71, false positives 32, false negatives 5** — the best precision
+and recall simultaneously recorded in this project's history, beating both the Groq/majority-vote
+result and the original pre-fix baseline. Answer-level catch rate moved the other way (strict
+0.44→0.39, loose 0.72→0.50), an expected side effect of precision improving — fewer false
+positives means fewer of the 18 flagged answers get an unrelated claim flagged by chance. Full
+account in ADR-021 (`docs/problems_and_decisions.md`); results above reflect this final, reported
 state.
 
 See [`docs/problems_and_decisions.md`](docs/problems_and_decisions.md) for the running decision

@@ -45,10 +45,10 @@ is applying and *measuring* it specifically on Hinglish output, not inventing a 
 ## System architecture — 6 stages
 
 1. **Retrieval** — embed the question, find closest passages (bge-m3 + FAISS)
-2. **Generation** — answer in Hinglish, grounded only in retrieved passages (Groq)
-3. **Claim decomposition** — split the answer into atomic, checkable claims
-4. **Per-claim retrieval** — re-query the index with *each individual claim*
-5. **Verification** — LLM-as-judge: supported / contradicted / unverifiable + confidence
+2. **Generation** — answer in Hinglish, grounded only in retrieved passages (Claude)
+3. **Claim decomposition** — split the answer into atomic, checkable claims (Claude, regex fallback)
+4. **Per-claim retrieval** — evidence pool = generation's context passages + a fresh per-claim lookup
+5. **Verification** — LLM-as-judge: supported / contradicted / unverifiable + confidence, majority of 3
 6. **Aggregation** — combine verdicts back into the answer, shown next to the plain answer
 
 Every component is pretrained and reused as-is — no model trained or fine-tuned.
@@ -57,13 +57,13 @@ Every component is pretrained and reused as-is — no model trained or fine-tune
 
 ## Knowledge base
 
-**183 atomic facts**, scraped live from official `.gov.in` sources — not hand-written
+**196 atomic facts**, scraped live from official `.gov.in` sources — not hand-written
 
 | Scheme | Facts | Sources |
 |---|---|---|
-| PM-KISAN | 43 | Operational Guidelines + Revised FAQ + Additional FAQ (PDFs) |
+| PM-KISAN | 51 | Operational Guidelines + Revised FAQ + Additional FAQ (PDFs); grew from 43 as oversized rows were split into atomic facts (ADR-019) and a corrupted row was fixed (ADR-021) |
 | Ayushman Bharat | 37 | Official FAQ + Benefits page |
-| PM Awas Yojana | 58 | FAQ + PMAY-U 2.0 Operational Guidelines (PDF) |
+| PM Awas Yojana | 63 | FAQ + PMAY-U 2.0 Operational Guidelines (PDF); grew from 58 as an oversized row was split (ADR-019) |
 | Post-Matric Scholarship | 45 | National guidelines PDF + Maharashtra state page (originally 34 rows — one oversized row later split into 12 atomic facts, ADR-015) |
 
 Re-fetchable and reproducible: `scripts/fetch_scheme_data.py` re-derives every file from its live
@@ -75,12 +75,12 @@ source on demand.
 
 | Component | Choice |
 |---|---|
-| Generator + verifier | Groq API — `openai/gpt-oss-120b` (free tier) |
+| Generator + decomposer + verifier | Anthropic API — `claude-haiku-4-5` (switched from Groq, ADR-021) |
 | Embeddings | `BAAI/bge-m3`, local, multilingual |
 | Vector store | FAISS, in-memory, local |
-| Claim decomposition | Rule-based Python (sentence + connector-word rules) |
+| Claim decomposition | LLM-based (Claude), rule-based Python as fallback |
 | Demo | Streamlit |
-| Dependencies | `uv` + `pyproject.toml`, 14 `pytest` tests |
+| Dependencies | `uv` + `pyproject.toml`, 16 `pytest` tests |
 
 Runs entirely on free tools — no GPU, no paid API, no institutional compute.
 
@@ -108,16 +108,16 @@ provisional throughout.
 
 ## Reading the results honestly
 
-- **Precision 0.25, recall 0.67** — the final, reported numbers, after two detours (next slides)
-- **Beats the original pre-fix baseline** on precision (0.25 vs 0.21), false positives (49 vs 65),
-  and false-alarm rate (0.48 vs 0.57); recall recovered to within 4 points of it (0.67 vs 0.71)
+- **Precision 0.27, recall 0.71** — the final, reported numbers, after three detours (next slides)
+- **Best precision AND recall recorded simultaneously anywhere in this project** — beats every
+  earlier state, including the very first pre-fix baseline (0.21/0.71)
 - **The baseline has a 0% catch rate by definition** — the plain pipeline would let every one of
   the 18 non-fully-correct answers through completely unflagged
-- Answer-level strict catch rate is 0.44 in the final measured run — see the second detour below
-  for why this moved even though claim-level precision/recall didn't get worse
-- Numbers are samples, not fixed measurements — re-running on identical claim text at
-  `temperature=0` still moves individual verdicts run to run (confirmed directly, not just
-  suspected — see below)
+- Answer-level strict catch rate is 0.39 in the final measured run — *lower* than earlier rounds
+  despite better precision/recall — see the third detour below for why
+- Numbers are samples, not fixed measurements — re-running verification on identical claim text
+  still moved individual verdicts run to run (confirmed directly on Groq, not just suspected), and
+  even claim decomposition itself isn't perfectly stable run to run on identical input
 
 ---
 
@@ -221,16 +221,46 @@ unique answer. Reported as a wash, kept for sound engineering reasons, not a sco
 
 ---
 
+## Third detour: switched Groq → Claude, and it actually moved the needle
+
+Groq's daily quota kept blocking full runs — sometimes for days. Switched `generation.py`/
+`decomposition.py`/`verification.py` to Claude (Haiku 4.5), and while doing so: replaced regex
+claim decomposition with an LLM-based version, and redesigned `verify_claim()`'s evidence pool.
+
+First tried evidence pool = *only* the passages that generated the answer (avoids wrong-scheme
+evidence a short claim's own retrieval pulls in). It worked for that — false-alarm rate improved —
+but **recall dropped (0.67 → 0.50)**. Reading evidence text directly explained why: verification
+now shared generation's blind spots. If generation's retrieval missed a fact, verification saw the
+exact same gap and confirmed a false "context doesn't say this" claim as SUPPORTED.
+
+**Fix: merge, don't choose.** Evidence pool = context passages **+** a fresh per-claim retrieval,
+deduplicated. While diagnosing the regression, also found and fixed a real data-corruption bug — a
+`PM-KISAN.csv` row titled "exclusion criteria" had a body that duplicated an unrelated fact,
+traced to the same malformed source PDF as an earlier data bug (P-007).
+
+**Result: precision 0.27, recall 0.71, false positives 32, false negatives 5** — better than every
+prior state on both axes at once. Answer-level catch rate went the other way (0.44 → 0.39) — an
+expected side effect: fewer false positives means fewer answers get a claim flagged "by accident."
+
+---
+
 ## What's still open — named, not hand-waved
 
-- **Wrong or ambiguous-scheme retrieval for claims that don't name a scheme**: false negatives now
-  concentrate in claims where retrieval picks the wrong scheme's evidence outright, not merely an
-  oversized row losing a retrieval race — extending row-splitting further didn't reach these.
+- **Decomposition still occasionally bundles claims it correctly splits elsewhere** (Q10) —
+  switching to an LLM decomposer reduced this but didn't eliminate it, and the LLM decomposer
+  isn't perfectly stable run-to-run on identical input either (a negation was dropped on one claim
+  between two runs, flipping its truth value).
+- **True-content-wrong-scheme attribution** (Q30): a real fact presented as belonging to the wrong
+  scheme's answer. No version of this verifier checks claim-vs-question-scheme, only
+  claim-vs-evidence — would need a structurally different check.
+- **A document-structure scope mismatch** (Q49): "the scheme has two models" is true of one
+  vertical, not the whole scheme — the verifier has no way to represent that distinction.
 - **Genuine LLM-judge misjudgment**: Q42's caste-certificate claim — correct evidence, wrong
-  verdict anyway. A real reliability limit on the method, not an engineering bug.
-- **Non-determinism**: confirmed directly (12 of 20 verdict changes on identical evidence across
-  two runs) — any single reported number is a sample, not a fixed measurement. Majority voting
-  reduces but doesn't eliminate this.
+  verdict anyway. A real reliability limit on the method, not an engineering bug (found on Groq,
+  not re-tested against Claude).
+- **Non-determinism, at two layers now**: the judge (confirmed directly — 12 of 20 verdict changes
+  on identical evidence across two Groq runs; majority voting reduces but doesn't eliminate this)
+  and, newly found, the LLM-based decomposer itself.
 
 ---
 
