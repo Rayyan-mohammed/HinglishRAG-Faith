@@ -1,82 +1,118 @@
-# Deploying to Google Cloud Run
+# Deploying to AWS Lambda
 
-Switched from Hugging Face Spaces after HF moved Docker Spaces behind a paid plan (mid-2026).
-Cloud Run has a genuine perpetual free tier (2M requests/month, scales to zero cost when idle)
-and deploys straight from this `web/` folder — no git subtree tricks needed, unlike the HF
-approach this replaced.
+Third hosting choice, after two dead ends: Hugging Face Spaces moved Docker Spaces behind a paid
+plan, and Google Cloud Run required a ₹1000 account-verification prepayment in India before
+billing would even activate. AWS Lambda has a genuinely perpetual free tier (1M requests +
+400,000 GB-seconds compute/month, forever — not a 12-month trial) and only a ₹2 refundable
+authorization hold to verify a card in India.
 
-**One real cost to know about upfront:** Google requires a credit card on file for any Cloud
-project, even to stay within the free tier. You won't be charged for usage that stays under the
-free quota (which is generous for a low-traffic demo), but the card is a real requirement, not
-optional.
+Local Docker Desktop also turned out to be unreliable on this machine (the engine hung mid-build
+and needed a restart) — so this guide builds the image in **AWS CloudShell** instead, a
+browser-based terminal built into the AWS Console with Docker pre-installed. Nothing to install
+locally.
 
-## 1. One-time account setup
+## Already done (for this account)
 
-1. Go to https://console.cloud.google.com/ and sign in (free Google account is fine).
-2. Create a new **Project** (top-left project picker → New Project). Note the Project ID.
-3. You'll be prompted to link a **Billing account** — add a card. Again: this doesn't mean
-   you're charged, it's required to enable any compute service including the free tier.
-4. Install the `gcloud` CLI: https://cloud.google.com/sdk/docs/install (or use **Cloud Shell** in
-   the browser console instead — it has `gcloud` preinstalled, no local install needed, and can
-   run every command below directly from a browser terminal).
-5. Authenticate and set your project:
-   ```
-   gcloud auth login
-   gcloud config set project YOUR_PROJECT_ID
-   ```
+These exist already, no need to repeat them:
+- ECR repository: `533047843280.dkr.ecr.us-east-1.amazonaws.com/codeswitch-verify`
+- IAM execution role: `arn:aws:iam::533047843280:role/codeswitch-verify-lambda-role`
+  (trust policy in `web/lambda-trust-policy.json`, has `AWSLambdaBasicExecutionRole` attached)
 
-## 2. Store the API key in Secret Manager (once)
+## 1. Open CloudShell
 
-Don't pass the key as a plain env var on the deploy command — it'd end up in shell history and
-Cloud Build logs. Store it as a secret instead:
+In the AWS Console (https://console.aws.amazon.com/), click the CloudShell icon in the top nav
+bar (a `>_` icon). Wait for it to provision (~30-60s the first time).
 
-```
-gcloud services enable secretmanager.googleapis.com run.googleapis.com cloudbuild.googleapis.com
-echo -n "your-actual-anthropic-api-key" | gcloud secrets create anthropic-api-key --data-file=-
+## 2. Clone the repo and build the image
+
+```bash
+git clone https://github.com/Rayyan-mohammed/HinglishRAG-Faith.git
+cd HinglishRAG-Faith/web
+docker build -t codeswitch-verify-web .
 ```
 
-## 3. Deploy
+CloudShell's environment is already `linux/amd64` (matches what Lambda needs), so no `--platform`
+flag needed here, unlike building on Windows locally.
 
-From the repo root:
+## 3. Push to ECR
 
+```bash
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 533047843280.dkr.ecr.us-east-1.amazonaws.com
+docker tag codeswitch-verify-web:latest 533047843280.dkr.ecr.us-east-1.amazonaws.com/codeswitch-verify:latest
+docker push 533047843280.dkr.ecr.us-east-1.amazonaws.com/codeswitch-verify:latest
 ```
-gcloud run deploy codeswitch-verify \
-  --source ./web \
-  --region us-central1 \
-  --allow-unauthenticated \
-  --memory 4Gi \
-  --cpu 2 \
+
+## 4. Create the Lambda function (first deploy only)
+
+```bash
+aws lambda create-function \
+  --function-name codeswitch-verify \
+  --package-type Image \
+  --code ImageUri=533047843280.dkr.ecr.us-east-1.amazonaws.com/codeswitch-verify:latest \
+  --role arn:aws:iam::533047843280:role/codeswitch-verify-lambda-role \
   --timeout 300 \
-  --set-secrets ANTHROPIC_API_KEY=anthropic-api-key:latest
+  --memory-size 4096 \
+  --region us-east-1 \
+  --environment "Variables={ANTHROPIC_API_KEY=your_actual_key_here}"
 ```
 
-What each flag is for:
-- `--source ./web` — builds `web/Dockerfile` directly from this folder, no separate image push step.
-- `--memory 4Gi` — bge-m3 needs real RAM; Cloud Run's 512MiB default is too small.
-- `--timeout 300` — a `verify: true` request can take up to ~90s (majority-vote judging across
-  several claims); the default request timeout is fine but this makes the headroom explicit.
-- `--allow-unauthenticated` — makes the demo publicly reachable without requiring Google sign-in
-  to use it (the app's own rate limiter is still the cost guard, not Google auth).
+- `--timeout 300` — a `verify:true` request can take up to ~90s (majority-vote judging across
+  several claims); this gives real headroom, well under Lambda's 900s (15 min) ceiling.
+- `--memory-size 4096` — bge-m3 needs real RAM; Lambda also scales CPU proportionally with
+  memory, which helps embedding speed too.
+- `--environment` — Lambda environment variables are encrypted at rest by default, which is
+  enough for a demo project; skip typing the real key in shell history by pasting it only when
+  you run this command interactively, not by saving it in a script.
 
-First deploy takes a few minutes (Cloud Build builds the multi-stage Docker image). When it
-finishes, `gcloud` prints the live URL — that's the public site.
+## 5. Make it publicly reachable (Function URL)
+
+```bash
+aws lambda create-function-url-config \
+  --function-name codeswitch-verify \
+  --auth-type NONE \
+  --region us-east-1
+
+aws lambda add-permission \
+  --function-name codeswitch-verify \
+  --statement-id FunctionURLAllowPublicAccess \
+  --action lambda:InvokeFunctionUrl \
+  --principal "*" \
+  --function-url-auth-type NONE \
+  --region us-east-1
+```
+
+The first command prints a `FunctionUrl` — that's the public site.
 
 ## Updating later
 
-Same command, run again after making changes:
+Rebuild, re-push, then point the function at the new image:
 
+```bash
+cd HinglishRAG-Faith && git pull && cd web
+docker build -t codeswitch-verify-web .
+docker tag codeswitch-verify-web:latest 533047843280.dkr.ecr.us-east-1.amazonaws.com/codeswitch-verify:latest
+docker push 533047843280.dkr.ecr.us-east-1.amazonaws.com/codeswitch-verify:latest
+
+aws lambda update-function-code \
+  --function-name codeswitch-verify \
+  --image-uri 533047843280.dkr.ecr.us-east-1.amazonaws.com/codeswitch-verify:latest \
+  --region us-east-1
 ```
-gcloud run deploy codeswitch-verify --source ./web --region us-central1
-```
-(Cloud Run remembers the previous flags like `--memory`/`--set-secrets` across revisions, so a
-plain re-run usually doesn't need every flag repeated — but if something looks off after a
-redeploy, re-run the full command from step 3 to be sure.)
 
 ## Cold starts
 
-Cloud Run scales to zero when idle (that's what keeps it free) — the first request after a quiet
-period triggers a fresh container start, which needs to download/load the bge-m3 embedding model
-and build the FAISS index before it can answer (roughly 30-60s). Subsequent requests to the same
-warm instance are fast. This is a real, disclosed tradeoff of staying on the free tier — setting
-`--min-instances 1` would keep one instance always warm and eliminate this, at the cost of
-ongoing charges instead of scale-to-zero.
+No traffic means Lambda scales to zero (that's what keeps it free) — the first request after a
+quiet period needs a fresh container: pull the image layers, load bge-m3, build the FAISS index,
+*then* answer. This can take noticeably longer than Cloud Run's equivalent cold start, since
+container-image Lambda cold starts are typically slower — possibly a minute or more on the very
+first request. Subsequent requests to the same warm instance are fast. Eliminating this
+(`--provisioned-concurrency`) costs money continuously instead of scaling to zero — a disclosed
+tradeoff of staying on the free tier, not a bug.
+
+## Rotate the AWS credentials used to set this up
+
+The access key used to configure the CLI for this setup was shared in a chat at one point, which
+means it should be treated as compromised regardless of who saw it. It's also a **root account**
+key (unrestricted access, not a scoped IAM user). Once the deploy above is confirmed working:
+delete that access key in the IAM console (or Root user → Security credentials), and if ongoing
+CLI access is needed later, create a scoped IAM user instead of using root keys.

@@ -21,7 +21,10 @@ from pipeline_src.retrieval import build_index
 BACKEND_DIR = Path(__file__).resolve().parent
 WEB_ROOT = BACKEND_DIR.parent
 SCHEMES_DIR = WEB_ROOT / "data" / "schemes"
-INDEX_DIR = WEB_ROOT / "index"
+# /tmp specifically -- on AWS Lambda (and some other serverless container runtimes) everything
+# outside /tmp is a read-only filesystem at runtime, even though it's writable at image build
+# time. Using /tmp everywhere keeps this portable across Lambda, Cloud Run, and plain Docker.
+INDEX_DIR = Path("/tmp/index")
 FRONTEND_DIR = WEB_ROOT / "frontend" / "dist"
 
 app = FastAPI(title="CodeSwitch-Verify")

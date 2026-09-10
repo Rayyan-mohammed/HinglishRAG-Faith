@@ -12,8 +12,8 @@ This is the deployable version of the pipeline built in the main `HinglishRAG-Fa
 - `backend/main.py` — FastAPI app: `POST /api/ask`, `GET /api/health`, serves `frontend/` as
   static files.
 - `backend/pipeline_src/` — a **deliberate, self-contained copy** of the main project's
-  `src/*.py` + `config/settings.py`. It's a copy, not an import, because Cloud Run's
-  `--source ./web` deploy only sees what's under `web/`, not the main repo's `../src`.
+  `src/*.py` + `config/settings.py`. It's a copy, not an import, since this `web/` folder is what
+  gets built into the deployed image on its own, not the main repo's `../src`.
   **If the main project's pipeline changes, mirror the change here too if the live demo should
   reflect it.**
 - `frontend/` — React (Vite + Tailwind + Framer Motion) single-page UI. Built at deploy time by
@@ -50,17 +50,17 @@ To produce the build the backend serves in production: `cd web/frontend && npm r
 
 ## Configuration
 
-Requires one secret: `ANTHROPIC_API_KEY`. On Google Cloud Run, this is stored in Secret Manager
-and wired in via `--set-secrets` at deploy time — never commit it. See `DEPLOY.md`.
+Requires one secret: `ANTHROPIC_API_KEY`. On AWS Lambda, this is set as a function environment
+variable (encrypted at rest by default) at deploy time — never commit it. See `DEPLOY.md`.
 
 ## Rate limiting
 
 `/api/ask` is public and unauthenticated, and it calls a paid API — `backend/main.py` has a
 simple in-memory per-IP rate limit (10 requests/minute by default) as a basic cost guard. This is
-not a substitute for real infrastructure (it resets on restart and doesn't survive multiple
-container replicas — Cloud Run can spin up more than one under load), just a cheap safety net for
-a demo project.
+not a substitute for real infrastructure (it resets whenever a fresh Lambda instance spins up,
+and doesn't survive multiple concurrent instances under load), just a cheap safety net for a demo
+project.
 
 ## Deployment
 
-See `DEPLOY.md` in this directory for the exact steps to deploy this to Google Cloud Run.
+See `DEPLOY.md` in this directory for the exact steps to deploy this to AWS Lambda.
