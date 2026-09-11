@@ -22,7 +22,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt/extensions/lambda-adapter
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+
+# torch installed separately, from PyTorch's own CPU-only wheel index, before the rest of
+# requirements.txt -- the default PyPI wheel that sentence-transformers would otherwise pull in
+# is ~550MB (bundles CUDA support this app never uses); the CPU-only build is a fraction of that.
+# Also isolates the single largest, slowest download into its own cached layer, so a network
+# hiccup here doesn't force redownloading everything else on retry.
+# --timeout/--retries: the connection this is building on is slow and occasionally drops mid-
+# download -- pip's default 15s read timeout was tripping on large wheels (scipy, faiss-cpu)
+# even while data was still trickling in. Generous values here, not because Lambda needs them,
+# just to survive this specific network.
+RUN pip install --no-cache-dir --timeout 120 --retries 15 torch --index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir --timeout 120 --retries 15 -r requirements.txt
 
 COPY backend/ backend/
 COPY data/ data/
