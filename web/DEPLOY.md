@@ -83,13 +83,48 @@ aws lambda add-permission \
 
 The first command prints a `FunctionUrl` — that's the public site.
 
+### 5b. If the Function URL answers "Forbidden" (new-account restriction) — use CloudFront
+
+On a brand-new AWS account, anonymous access to a Function URL can be blocked. What worked here:
+switch the URL to `AWS_IAM` auth and put CloudFront in front of it with an Origin Access Control
+that signs requests to Lambda.
+
+```bash
+aws lambda update-function-url-config --function-name codeswitch-verify --auth-type AWS_IAM
+
+aws cloudfront create-origin-access-control --origin-access-control-config \
+  '{"Name":"codeswitch-verify-oac","SigningProtocol":"sigv4","SigningBehavior":"always","OriginAccessControlOriginType":"lambda"}'
+# then create a distribution whose origin is the Function URL host, with that OAC id, all HTTP
+# methods allowed, CachingDisabled policy, AllViewerExceptHostHeader origin policy, 60s read timeout.
+
+aws lambda add-permission --function-name codeswitch-verify --statement-id cloudfront-invoke-url \
+  --action lambda:InvokeFunctionUrl --principal cloudfront.amazonaws.com \
+  --source-arn <distribution ARN> --function-url-auth-type AWS_IAM
+aws lambda add-permission --function-name codeswitch-verify --statement-id cloudfront-invoke-fn \
+  --action lambda:InvokeFunction --principal cloudfront.amazonaws.com --source-arn <distribution ARN>
+```
+
+The site is then served at the distribution's `*.cloudfront.net` address. A custom Route 53 domain
+isn't possible on Free Tier accounts (domain registration is refused), so the cloudfront.net
+address is the public URL. Because the URL is signed, `POST` bodies must carry their SHA-256 in
+`x-amz-content-sha256` — the frontend does this in `App.jsx`.
+
+## Memory: half-precision model
+
+New accounts are capped at 3008MB of Lambda memory (concurrency limit 10 until AWS raises it), and
+the stock fp32 bge-m3 runs out of memory there. `scripts/make_fp16_model.py` saves a half-precision
+copy to `web/models/bge-m3-fp16` (not committed, ~1.1GB); the Dockerfile copies it in and sets
+`EMBEDDING_MODEL` to it. Embeddings match fp32 to ~4 decimals with identical ranking. Run the
+script once before building the image.
+
 ## Updating later
 
 Rebuild, re-push, then point the function at the new image:
 
 ```bash
 cd HinglishRAG-Faith && git pull && cd web
-docker build -t codeswitch-verify-web .
+python scripts/make_fp16_model.py   # once, if web/models/ is missing
+docker build --provenance=false -t codeswitch-verify-web .
 docker tag codeswitch-verify-web:latest 533047843280.dkr.ecr.us-east-1.amazonaws.com/codeswitch-verify:latest
 docker push 533047843280.dkr.ecr.us-east-1.amazonaws.com/codeswitch-verify:latest
 

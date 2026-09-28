@@ -11,9 +11,12 @@ RUN npm run build
 FROM python:3.11-slim
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+# build-essential deliberately not installed -- every package in requirements.txt (fastapi,
+# sentence-transformers, faiss-cpu, numpy, pandas, etc.) ships prebuilt manylinux wheels for this
+# platform, so no compiler toolchain is actually needed. This also sidesteps a real, reproducible
+# block on Debian's default apt mirror (consistent 403 from the same IP -- looks like an
+# ISP/network-level restriction on plain HTTP to that mirror, not a Debian outage) that isn't
+# worth fighting for a dependency we don't need.
 
 # Lambda Web Adapter -- lets AWS Lambda run this as a normal HTTP server (uvicorn) instead of
 # needing the app rewritten to Lambda's native handler/event format. It proxies Lambda Function
@@ -37,6 +40,7 @@ RUN pip install --no-cache-dir --timeout 120 --retries 15 -r requirements.txt
 
 COPY backend/ backend/
 COPY data/ data/
+COPY models/ models/
 COPY --from=frontend-build /app/frontend/dist frontend/dist
 
 # PORT: what our own CMD binds uvicorn to. AWS_LWA_PORT: what the Lambda Web Adapter forwards
@@ -46,6 +50,9 @@ COPY --from=frontend-build /app/frontend/dist frontend/dist
 ENV PORT=8080
 ENV AWS_LWA_PORT=8080
 ENV HF_HOME=/tmp/hf_cache
+# Pre-converted half-precision bge-m3 baked into the image (see scripts/make_fp16_model.py) --
+# keeps startup memory under Lambda's 3008MB cap and skips a 2GB download on every cold start.
+ENV EMBEDDING_MODEL=/app/models/bge-m3-fp16
 EXPOSE 8080
 
 CMD ["sh", "-c", "uvicorn main:app --app-dir backend --host 0.0.0.0 --port ${PORT}"]

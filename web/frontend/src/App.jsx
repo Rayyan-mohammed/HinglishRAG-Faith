@@ -28,10 +28,17 @@ export default function App() {
     setLastVerify(verify);
 
     try {
+      const body = JSON.stringify({ question: question.trim(), verify });
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(body));
+      const payloadHash = Array.from(new Uint8Array(digest))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+
+      // CloudFront signs requests to the Lambda URL (OAC); POST bodies need their SHA-256 up front.
       const res = await fetch("/api/ask", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: question.trim(), verify }),
+        headers: { "Content-Type": "application/json", "x-amz-content-sha256": payloadHash },
+        body,
       });
 
       const data = await res.json().catch(() => ({}));

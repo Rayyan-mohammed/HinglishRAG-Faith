@@ -7,6 +7,7 @@ from pathlib import Path
 import faiss
 import numpy as np
 import pandas as pd
+import torch
 from sentence_transformers import SentenceTransformer
 
 from .settings import EMBEDDING_MODEL, INDEX_DIR, SCHEMES_DIR, TOP_K
@@ -17,7 +18,7 @@ _model = None
 def get_embedder():
     global _model
     if _model is None:
-        _model = SentenceTransformer(EMBEDDING_MODEL)
+        _model = SentenceTransformer(EMBEDDING_MODEL, model_kwargs={"torch_dtype": torch.float16})
     return _model
 
 
