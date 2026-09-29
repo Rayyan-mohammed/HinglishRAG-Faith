@@ -41,6 +41,7 @@ RUN pip install --no-cache-dir --timeout 120 --retries 15 -r requirements.txt
 COPY backend/ backend/
 COPY data/ data/
 COPY models/ models/
+COPY prebuilt_index/ prebuilt_index/
 COPY --from=frontend-build /app/frontend/dist frontend/dist
 
 # PORT: what our own CMD binds uvicorn to. AWS_LWA_PORT: what the Lambda Web Adapter forwards

@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from pipeline_src.pipeline import answer_question
-from pipeline_src.retrieval import build_index
+from pipeline_src.retrieval import build_index, load_index
 
 BACKEND_DIR = Path(__file__).resolve().parent
 WEB_ROOT = BACKEND_DIR.parent
@@ -25,6 +25,10 @@ SCHEMES_DIR = WEB_ROOT / "data" / "schemes"
 # outside /tmp is a read-only filesystem at runtime, even though it's writable at image build
 # time. Using /tmp everywhere keeps this portable across Lambda, Cloud Run, and plain Docker.
 INDEX_DIR = Path("/tmp/index")
+# Baked into the image by scripts/make_index.py -- reading this at startup instead of
+# re-embedding every scheme fact on every cold start is most of the difference between a cold
+# start CloudFront's origin timeout tolerates and one it doesn't.
+PREBUILT_INDEX_DIR = WEB_ROOT / "prebuilt_index"
 FRONTEND_DIR = WEB_ROOT / "frontend" / "dist"
 
 app = FastAPI(title="CodeSwitch-Verify")
@@ -42,7 +46,10 @@ _request_log = defaultdict(deque)
 @app.on_event("startup")
 def startup():
     global _index, _passages
-    _index, _passages = build_index(schemes_dir=str(SCHEMES_DIR), index_dir=str(INDEX_DIR))
+    if (PREBUILT_INDEX_DIR / "scheme_docs.faiss").exists():
+        _index, _passages = load_index(index_dir=str(PREBUILT_INDEX_DIR))
+    else:
+        _index, _passages = build_index(schemes_dir=str(SCHEMES_DIR), index_dir=str(INDEX_DIR))
 
 
 def _check_rate_limit(client_ip):
