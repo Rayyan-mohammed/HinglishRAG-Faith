@@ -31,7 +31,7 @@ Two processes: the FastAPI backend, and (for frontend changes) the Vite dev serv
 ```
 cd web
 pip install -r requirements.txt
-export ANTHROPIC_API_KEY=your_key_here   # or set in a .env file
+export GROQ_API_KEY=your_key_here        # or set in a .env file
 uvicorn main:app --app-dir backend --reload
 ```
 Runs at `http://localhost:8000` — serves the API and, if you've already built the frontend once
@@ -50,8 +50,9 @@ To produce the build the backend serves in production: `cd web/frontend && npm r
 
 ## Configuration
 
-Requires one secret: `ANTHROPIC_API_KEY`. On AWS Lambda, this is set as a function environment
-variable (encrypted at rest by default) at deploy time — never commit it. See `DEPLOY.md`.
+Requires one secret: `GROQ_API_KEY` (optionally `GROQ_API_KEY_2`/`_3`/`_4` for failover across
+Groq's free-tier daily quota). On AWS Lambda, these are set as function environment variables
+(encrypted at rest by default) at deploy time — never commit them. See `DEPLOY.md`.
 
 ## Rate limiting
 

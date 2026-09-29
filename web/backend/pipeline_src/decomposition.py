@@ -2,9 +2,12 @@
 
 import json
 import re
+import time
+
+from groq import RateLimitError
 
 from .settings import DECOMPOSER_MODEL
-from .generation import get_client
+from .generation import get_clients
 
 CONNECTORS = [
     "aur", "lekin", "but", "however", "also", "and", "kyunki", "because",
@@ -119,21 +122,36 @@ def decompose_llm(answer):
     resolve these directly from context instead of pattern-matching around each case one at a
     time.
 
-    Switched from Groq to Claude in ADR-021 -- no manual retry/failover loop needed, the
-    Anthropic client already retries 429/5xx with backoff (see get_client() in
-    src/generation.py). Falls back to decompose() if the response isn't valid JSON, isn't a
-    list, or comes back empty -- a malformed response degrades to the old, safe, deterministic
-    behavior rather than losing an answer's claims entirely."""
+    Back on Groq for the live demo (see generation.py) -- fails over across configured API
+    keys on a rate limit, same pattern as judge() in verification.py. Falls back to decompose()
+    if the response isn't valid JSON, isn't a list, or comes back empty -- a malformed response
+    degrades to the old, safe, deterministic behavior rather than losing an answer's claims
+    entirely."""
     if not answer or not answer.strip():
         return []
 
-    client = get_client()
-    response = client.messages.create(
-        model=DECOMPOSER_MODEL,
-        max_tokens=1024,
-        messages=[{"role": "user", "content": DECOMPOSITION_PROMPT.format(answer=answer)}],
-    )
-    raw = next(b.text for b in response.content if b.type == "text")
+    clients = get_clients()
+    if not clients:
+        return decompose(answer)
+
+    response = None
+    last_error = None
+    for offset in range(len(clients)):
+        try:
+            response = clients[offset].chat.completions.create(
+                model=DECOMPOSER_MODEL,
+                messages=[
+                    {"role": "user", "content": DECOMPOSITION_PROMPT.format(answer=answer)}
+                ],
+            )
+            break
+        except RateLimitError as e:
+            last_error = e
+            time.sleep(1)
+    if response is None:
+        raise last_error
+
+    raw = response.choices[0].message.content
     try:
         claims = _extract_json(raw)
     except json.JSONDecodeError:

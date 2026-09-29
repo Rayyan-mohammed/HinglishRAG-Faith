@@ -1,10 +1,13 @@
 """Per-claim retrieval + LLM-as-judge verification against evidence."""
 
 import json
+import time
 from collections import Counter
 
+from groq import RateLimitError
+
 from .settings import VERIFIER_MODEL
-from .generation import get_client
+from .generation import get_clients
 from .retrieval import retrieve
 
 VERDICT_PROMPT = """You are a strict fact-checker. Given a CLAIM and an EVIDENCE passage, decide if the
@@ -55,23 +58,48 @@ def _extract_json(raw):
     raise json.JSONDecodeError("No JSON value found in response", raw, 0)
 
 
-def judge(claim, evidence_text):
+_last_good_client = 0  # remembers which key last worked, so we don't re-try exhausted ones first
+
+
+def judge(claim, evidence_text, max_retries=5):
     """Core LLM-as-judge call: a claim against a block of evidence text.
     No retrieval involved — usable directly on hand-written claim/evidence pairs.
 
-    Switched from Groq to Claude in ADR-021. No manual retry/failover loop needed here --
-    Claude's paid API doesn't have Groq's free-tier daily-quota problem that made ADR-016's
-    multi-key failover necessary; the Anthropic client already retries 429/5xx with backoff
-    (see get_client() in src/generation.py)."""
-    client = get_client()
-    response = client.messages.create(
-        model=VERIFIER_MODEL,
-        max_tokens=256,
-        messages=[
-            {"role": "user", "content": VERDICT_PROMPT.format(claim=claim, evidence=evidence_text)}
-        ],
-    )
-    raw = next(b.text for b in response.content if b.type == "text")
+    Back on Groq for the live demo (see generation.py) -- fails over to any other configured
+    API key before waiting at all on a rate limit, same pattern as the pre-Claude pipeline
+    (ADR-016), since a key hitting its daily quota doesn't mean another key is out too."""
+    global _last_good_client
+    clients = get_clients()
+    if not clients:
+        raise RuntimeError("No GROQ_API_KEY configured — check .env")
+    response = None
+
+    for attempt in range(max_retries):
+        last_error = None
+        for offset in range(len(clients)):
+            client_idx = (_last_good_client + offset) % len(clients)
+            try:
+                response = clients[client_idx].chat.completions.create(
+                    model=VERIFIER_MODEL,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": VERDICT_PROMPT.format(claim=claim, evidence=evidence_text),
+                        }
+                    ],
+                    temperature=0,
+                )
+                _last_good_client = client_idx
+                break
+            except RateLimitError as e:
+                last_error = e
+        if response is not None:
+            break
+        if attempt == max_retries - 1:
+            raise last_error
+        time.sleep(2**attempt)
+
+    raw = response.choices[0].message.content
     try:
         result = _extract_json(raw)
     except json.JSONDecodeError:

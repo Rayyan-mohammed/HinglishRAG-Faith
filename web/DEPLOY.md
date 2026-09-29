@@ -53,7 +53,7 @@ aws lambda create-function \
   --timeout 300 \
   --memory-size 4096 \
   --region us-east-1 \
-  --environment "Variables={ANTHROPIC_API_KEY=your_actual_key_here}"
+  --environment "Variables={GROQ_API_KEY=your_actual_key_here}"
 ```
 
 - `--timeout 300` — a `verify:true` request can take up to ~90s (majority-vote judging across
