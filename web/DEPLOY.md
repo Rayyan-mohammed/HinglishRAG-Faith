@@ -117,32 +117,63 @@ copy to `web/models/bge-m3-fp16` (not committed, ~1.1GB); the Dockerfile copies 
 `EMBEDDING_MODEL` to it. Embeddings match fp32 to ~4 decimals with identical ranking. Run the
 script once before building the image.
 
+## Cold starts and provisioned concurrency
+
+Cold starts on this image (bge-m3 + torch + FAISS) reliably ran 50s+ -- pulling image layers,
+loading the model, loading the prebuilt index -- before any request processing even started. That
+alone eats almost all of CloudFront's 60s origin timeout, so a cold request would time out at the
+client even though the Lambda invocation eventually succeeded. A 5-minute EventBridge warmer
+(`codeswitch-verify-warmer` rule, pings `/api/health` on a schedule) helps but doesn't prevent
+scale-to-zero reliably on a low-traffic demo, and two near-simultaneous requests (e.g. a user
+retrying after a timeout) can each cold-start their own separate environment.
+
+The actual fix: **provisioned concurrency** (1 instance) on a published version, kept permanently
+warm. Costs money continuously instead of scaling to zero, but this account has $100+ in free
+trial credit covering it comfortably for a course project's lifetime -- not a real ongoing cost
+here. Setup, done once:
+
+```bash
+aws lambda publish-version --function-name codeswitch-verify
+aws lambda create-alias --function-name codeswitch-verify --name live --function-version <N>
+aws lambda put-provisioned-concurrency-config --function-name codeswitch-verify --qualifier live \
+  --provisioned-concurrent-executions 1
+
+# the alias gets its own Function URL -- CloudFront's origin points at THIS hostname, not the
+# unqualified $LATEST one from step 5.
+aws lambda create-function-url-config --function-name codeswitch-verify --qualifier live --auth-type AWS_IAM
+aws lambda add-permission --function-name codeswitch-verify --qualifier live \
+  --statement-id cloudfront-invoke-url-live --action lambda:InvokeFunctionUrl \
+  --principal cloudfront.amazonaws.com --source-arn <distribution ARN> --function-url-auth-type AWS_IAM
+aws lambda add-permission --function-name codeswitch-verify --qualifier live \
+  --statement-id cloudfront-invoke-fn-live --action lambda:InvokeFunction \
+  --principal cloudfront.amazonaws.com --source-arn <distribution ARN>
+# then update the CloudFront distribution's origin DomainName to the new Function URL's hostname.
+```
+
 ## Updating later
 
-Rebuild, re-push, then point the function at the new image:
+Because the `live` alias pins to a specific published version (that's what provisioned concurrency
+is attached to), `update-function-code` alone is **not enough** -- it updates `$LATEST`, which
+nothing serves traffic from anymore. Publish a new version and move the alias:
 
 ```bash
 cd HinglishRAG-Faith && git pull && cd web
-python scripts/make_fp16_model.py   # once, if web/models/ is missing
+python scripts/make_fp16_model.py    # once, if web/models/ is missing
+python scripts/make_index.py         # once, if data/schemes/*.csv changed
 docker build --provenance=false -t codeswitch-verify-web .
 docker tag codeswitch-verify-web:latest 533047843280.dkr.ecr.us-east-1.amazonaws.com/codeswitch-verify:latest
 docker push 533047843280.dkr.ecr.us-east-1.amazonaws.com/codeswitch-verify:latest
 
-aws lambda update-function-code \
-  --function-name codeswitch-verify \
-  --image-uri 533047843280.dkr.ecr.us-east-1.amazonaws.com/codeswitch-verify:latest \
-  --region us-east-1
+aws lambda update-function-code --function-name codeswitch-verify \
+  --image-uri 533047843280.dkr.ecr.us-east-1.amazonaws.com/codeswitch-verify:latest
+aws lambda wait function-updated --function-name codeswitch-verify
+
+NEW_VERSION=$(aws lambda publish-version --function-name codeswitch-verify --query Version --output text)
+aws lambda update-alias --function-name codeswitch-verify --name live --function-version $NEW_VERSION
 ```
 
-## Cold starts
-
-No traffic means Lambda scales to zero (that's what keeps it free) — the first request after a
-quiet period needs a fresh container: pull the image layers, load bge-m3, build the FAISS index,
-*then* answer. This can take noticeably longer than Cloud Run's equivalent cold start, since
-container-image Lambda cold starts are typically slower — possibly a minute or more on the very
-first request. Subsequent requests to the same warm instance are fast. Eliminating this
-(`--provisioned-concurrency`) costs money continuously instead of scaling to zero — a disclosed
-tradeoff of staying on the free tier, not a bug.
+Provisioned concurrency re-warms automatically against the new version after the alias update --
+give it a minute or two before testing.
 
 ## Rotate the AWS credentials used to set this up
 
