@@ -12,6 +12,15 @@ from sentence_transformers import SentenceTransformer
 
 from .settings import EMBEDDING_MODEL, INDEX_DIR, SCHEMES_DIR, TOP_K
 
+# main.py's pipeline runs multiple claims' verify_claim() concurrently (see pipeline.py), each
+# doing its own retrieve() -> embedder.encode() call. Left at its default, PyTorch tries to use
+# every CPU core for EACH encode() call, so concurrent claims fight each other for the same
+# cores instead of actually running in parallel -- this alone was responsible for a 3-claim
+# verified request going from under a second to 40+ seconds locally. Each individual encode()
+# here is one short string, so there's nothing for intra-op threading to usefully parallelize
+# anyway; the real parallelism comes from the outer Python threads.
+torch.set_num_threads(1)
+
 _model = None
 
 

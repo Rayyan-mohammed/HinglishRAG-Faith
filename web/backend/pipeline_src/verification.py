@@ -3,6 +3,7 @@
 import json
 import time
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
 
 from groq import RateLimitError
 
@@ -147,7 +148,11 @@ def verify_claim(claim, index, passages, top_k=2, n_samples=3, context_passages=
         evidence_passages = retrieve(claim, index, passages, top_k=top_k)
     evidence_text = "\n\n".join(p["text"] for p in evidence_passages)
 
-    samples = [judge(claim, evidence_text) for _ in range(n_samples)]
+    # The n_samples judge() calls are independent network round-trips to Groq -- running them
+    # concurrently instead of one-after-another is what keeps a verified live-demo request under
+    # CloudFront's 60s origin timeout (a sequential 3-claim, 3-sample answer was clearing 60s).
+    with ThreadPoolExecutor(max_workers=n_samples) as pool:
+        samples = list(pool.map(lambda _: judge(claim, evidence_text), range(n_samples)))
     votes = Counter(s["verdict"] for s in samples)
     winning_verdict, winning_count = votes.most_common(1)[0]
     if winning_count * 2 <= n_samples:

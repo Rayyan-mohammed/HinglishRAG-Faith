@@ -1,5 +1,7 @@
 """End-to-end orchestration: retrieve, generate, decompose, verify, aggregate."""
 
+from concurrent.futures import ThreadPoolExecutor
+
 from .settings import TOP_K
 from .decomposition import decompose_llm
 from .generation import generate_answer
@@ -19,9 +21,15 @@ def answer_question(question, index, passages, verify=True):
 
     if verify:
         claims = decompose_llm(answer)
-        result["claims"] = [
-            verify_claim(claim, index, passages, context_passages=context_passages)
-            for claim in claims
-        ]
+        # Claims are verified independently -- running them concurrently (each already fans out
+        # into its own thread pool for its n_samples judge() calls, see verify_claim) is the
+        # other half of keeping a multi-claim verified request under CloudFront's 60s timeout.
+        with ThreadPoolExecutor(max_workers=max(len(claims), 1)) as pool:
+            result["claims"] = list(
+                pool.map(
+                    lambda c: verify_claim(c, index, passages, context_passages=context_passages),
+                    claims,
+                )
+            )
 
     return result

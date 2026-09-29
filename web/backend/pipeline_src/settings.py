@@ -19,7 +19,7 @@ GROQ_API_KEYS = [
 ]
 
 GENERATOR_MODEL = "openai/gpt-oss-120b"
-VERIFIER_MODEL = "openai/gpt-oss-120b"
+VERIFIER_MODEL = "qwen/qwen3.8-27b"
 DECOMPOSER_MODEL = "openai/gpt-oss-120b"
 EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "BAAI/bge-m3")
 
