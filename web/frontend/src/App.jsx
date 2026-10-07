@@ -1,14 +1,22 @@
-import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, Stethoscope } from "lucide-react";
+import { useRef, useState } from "react";
+import { AnimatePresence, MotionConfig, motion } from "framer-motion";
+import { AlertTriangle, BadgeCheck, FileSearch, Languages } from "lucide-react";
 
 import { useTheme } from "./hooks/useTheme.js";
-import ThemeToggle from "./components/ThemeToggle.jsx";
+import Navbar from "./components/Navbar.jsx";
 import QuestionForm from "./components/QuestionForm.jsx";
 import ResultSkeleton from "./components/ResultSkeleton.jsx";
 import AnswerCard from "./components/AnswerCard.jsx";
 import ClaimsList from "./components/ClaimsList.jsx";
 import SourcesPanel from "./components/SourcesPanel.jsx";
+import HowItWorks from "./components/HowItWorks.jsx";
+import SchemesSection from "./components/SchemesSection.jsx";
+
+const TRUST_POINTS = [
+  { icon: Languages, label: "Hinglish & code-switched input" },
+  { icon: BadgeCheck, label: "Claim-level verification" },
+  { icon: FileSearch, label: "Grounded in official sources" },
+];
 
 export default function App() {
   const { theme, toggle } = useTheme();
@@ -18,6 +26,7 @@ export default function App() {
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
   const [lastVerify, setLastVerify] = useState(true);
+  const textareaRef = useRef(null);
 
   const ask = async () => {
     if (!question.trim() || loading) return;
@@ -55,81 +64,133 @@ export default function App() {
     }
   };
 
+  // Scheme cards prefill the question box (same as the example chips) and bring it into view.
+  const prefillQuestion = (q) => {
+    setQuestion(q);
+    textareaRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    textareaRef.current?.focus({ preventScroll: true });
+  };
+
   return (
-    <div className="min-h-screen">
-      <header className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-600 to-purple-700 pb-14 pt-10">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-20"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 20% 20%, white 0, transparent 40%), radial-gradient(circle at 80% 0%, white 0, transparent 35%)",
-          }}
-        />
-        <div className="relative mx-auto flex max-w-2xl items-center justify-between px-5">
-          <div className="flex items-center gap-2 text-white/90">
-            <Stethoscope size={18} />
-            <span className="text-sm font-medium">CodeSwitch-Verify</span>
+    <MotionConfig reducedMotion="user">
+      <div id="top" className="min-h-screen">
+        <a
+          href="#question"
+          className="sr-only z-50 rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+        >
+          Skip to question
+        </a>
+
+        <Navbar theme={theme} onToggleTheme={toggle} />
+
+        <main>
+          <section className="relative overflow-hidden pb-20 pt-14 sm:pt-20">
+            <div className="hero-grid pointer-events-none absolute inset-0" aria-hidden="true" />
+            <div
+              className="pointer-events-none absolute left-1/2 top-0 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-brand-400/15 blur-3xl dark:bg-brand-500/10"
+              aria-hidden="true"
+            />
+
+            <div className="relative mx-auto max-w-3xl px-4 sm:px-6">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45 }}
+                className="text-center"
+              >
+                <span className="eyebrow">
+                  <span className="h-1.5 w-1.5 rounded-full bg-brand-500" aria-hidden="true" />
+                  Faithfulness-checked RAG for Indian government schemes
+                </span>
+                <h1 className="mt-6 text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 sm:text-5xl md:text-[3.5rem] dark:text-white">
+                  Scheme answers you can{" "}
+                  <span className="text-brand-700 dark:text-brand-400">actually trust.</span>
+                </h1>
+                <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-slate-600 sm:text-lg dark:text-slate-300">
+                  Ask about PM-KISAN, Ayushman Bharat, Post-Matric Scholarship or PM Awas Yojana in
+                  Hinglish. Every claim in the answer is checked against its official source.
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="mt-10"
+              >
+                <QuestionForm
+                  question={question}
+                  setQuestion={setQuestion}
+                  verify={verify}
+                  setVerify={setVerify}
+                  onSubmit={ask}
+                  loading={loading}
+                  textareaRef={textareaRef}
+                />
+              </motion.div>
+
+              <ul className="mt-5 flex flex-wrap justify-center gap-x-6 gap-y-2">
+                {TRUST_POINTS.map((t) => (
+                  <li key={t.label} className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
+                    <t.icon size={15} className="text-brand-500" aria-hidden="true" />
+                    {t.label}
+                  </li>
+                ))}
+              </ul>
+
+              <div aria-live="polite">
+                <AnimatePresence mode="wait">
+                  {error && (
+                    <motion.div
+                      role="alert"
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="mt-6 flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3
+                        text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300"
+                    >
+                      <AlertTriangle size={17} className="mt-0.5 shrink-0" />
+                      <span>
+                        <span className="font-semibold">Couldn't get an answer. </span>
+                        {error}
+                      </span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {loading && <ResultSkeleton verifying={verify} />}
+
+                <AnimatePresence>
+                  {result && !loading && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-8 text-left"
+                    >
+                      <AnswerCard answer={result.answer} />
+                      {lastVerify && result.claims && <ClaimsList claims={result.claims} />}
+                      <SourcesPanel sources={result.context_passages} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </section>
+
+          <HowItWorks />
+          <SchemesSection onAsk={prefillQuestion} />
+        </main>
+
+        <footer className="border-t border-slate-200 dark:border-slate-800">
+          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm text-slate-500 sm:flex-row sm:px-6 dark:text-slate-400">
+            <p>
+              <span className="font-semibold text-slate-700 dark:text-slate-200">CodeSwitch-Verify</span> — a
+              faithfulness-checked RAG demo for Hinglish government-scheme Q&amp;A.
+            </p>
+            <p className="text-xs">Informational only. Confirm details on official portals before applying.</p>
           </div>
-          <ThemeToggle theme={theme} onToggle={toggle} />
-        </div>
-
-        <div className="relative mx-auto mt-6 max-w-2xl px-5 text-center">
-          <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            Ask about government schemes.
-            <br className="hidden sm:block" /> Get answers you can check.
-          </h1>
-          <p className="mx-auto mt-3 max-w-lg text-sm text-indigo-100/90 sm:text-base">
-            PM-KISAN, Ayushman Bharat, Post-Matric Scholarship, PM Awas Yojana — ask in Hinglish,
-            every claim in the answer gets checked against its source.
-          </p>
-        </div>
-      </header>
-
-      <main className="mx-auto -mt-8 max-w-2xl px-5 pb-16">
-        <QuestionForm
-          question={question}
-          setQuestion={setQuestion}
-          verify={verify}
-          setVerify={setVerify}
-          onSubmit={ask}
-          loading={loading}
-        />
-
-        <AnimatePresence mode="wait">
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="mt-4 flex items-center gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3
-                text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400"
-            >
-              <AlertTriangle size={16} className="shrink-0" />
-              {error}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {loading && <ResultSkeleton verifying={verify} />}
-
-        <AnimatePresence>
-          {result && !loading && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-6"
-            >
-              <AnswerCard answer={result.answer} />
-              {lastVerify && result.claims && <ClaimsList claims={result.claims} />}
-              <SourcesPanel sources={result.context_passages} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </main>
-
-      <footer className="pb-10 text-center text-xs text-slate-400 dark:text-slate-600">
-        CodeSwitch-Verify — a faithfulness-checked RAG demo for Hinglish government-scheme Q&amp;A.
-      </footer>
-    </div>
+        </footer>
+      </div>
+    </MotionConfig>
   );
 }
