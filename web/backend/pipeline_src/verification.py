@@ -74,11 +74,13 @@ def judge(claim, evidence_text, max_retries=5):
     if not clients:
         raise RuntimeError("No GROQ_API_KEY configured — check .env")
     response = None
+    t_start = time.time()
 
     for attempt in range(max_retries):
         last_error = None
         for offset in range(len(clients)):
             client_idx = (_last_good_client + offset) % len(clients)
+            t_call = time.time()
             try:
                 response = clients[client_idx].chat.completions.create(
                     model=VERIFIER_MODEL,
@@ -90,14 +92,23 @@ def judge(claim, evidence_text, max_retries=5):
                     ],
                     temperature=0,
                 )
+                print(
+                    f"[timing] judge() key{client_idx} call: {time.time() - t_call:.1f}s "
+                    f"(attempt {attempt}, total so far {time.time() - t_start:.1f}s)"
+                )
                 _last_good_client = client_idx
                 break
             except RateLimitError as e:
                 last_error = e
+                print(f"[timing] judge() key{client_idx} RATE LIMITED after {time.time() - t_call:.1f}s: {e}")
+            except Exception as e:
+                last_error = e
+                print(f"[timing] judge() key{client_idx} ERROR after {time.time() - t_call:.1f}s: {type(e).__name__}: {e}")
         if response is not None:
             break
         if attempt == max_retries - 1:
             raise last_error
+        print(f"[timing] judge() sleeping {2**attempt}s before next attempt round")
         time.sleep(2**attempt)
 
     raw = response.choices[0].message.content
@@ -110,8 +121,18 @@ def judge(claim, evidence_text, max_retries=5):
     return result
 
 
-def verify_claim(claim, index, passages, top_k=2, n_samples=3, context_passages=None):
+def verify_claim(claim, index, passages, top_k=2, n_samples=1, context_passages=None):
     """Judges a claim against evidence by majority vote over n_samples independent judge() calls.
+
+    n_samples defaults to 1 here (the evaluated pipeline in ../../src still uses 3 -- see
+    ADR-019/ADR-021). Groq's free tier caps this org at ~8000 input tokens/minute SHARED across
+    all 3 configured keys (same org, confirmed via the rate-limit error's org id) -- a single
+    verified answer with even 4-5 claims at n_samples=3 means 12-15 concurrent judge() calls at
+    ~1100-1200 tokens each, instantly requesting 2x the per-minute budget. The resulting 429s and
+    retry backoff were pushing real requests past CloudFront's 60s timeout (observed 60-150s+).
+    n_samples=1 keeps a typical request under the token ceiling in one burst; it loses majority
+    voting's protection against a single unlucky non-deterministic verdict (ADR-019), a disclosed
+    accuracy/latency tradeoff for the live demo specifically, not applied to the scored pipeline.
 
     If context_passages is given -- the passages that were actually retrieved and handed to the
     generator to produce the answer this claim came from -- those are merged with a fresh

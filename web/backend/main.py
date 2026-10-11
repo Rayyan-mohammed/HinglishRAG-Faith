@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from pipeline_src.pipeline import answer_question
-from pipeline_src.retrieval import build_index, load_index
+from pipeline_src.retrieval import build_index, get_embedder, load_index
 
 BACKEND_DIR = Path(__file__).resolve().parent
 WEB_ROOT = BACKEND_DIR.parent
@@ -50,6 +50,11 @@ def startup():
         _index, _passages = load_index(index_dir=str(PREBUILT_INDEX_DIR))
     else:
         _index, _passages = build_index(schemes_dir=str(SCHEMES_DIR), index_dir=str(INDEX_DIR))
+    # get_embedder() lazy-loads bge-m3 on first call -- without forcing that here, the FIRST real
+    # retrieve() call in a freshly-warmed environment (e.g. right after provisioned concurrency
+    # re-warms on a new version) pays the ~40s model-load cost inside the request itself, which
+    # blew past CloudFront's 60s timeout even though the container was technically "warm".
+    get_embedder()
 
 
 def _check_rate_limit(client_ip):
@@ -100,6 +105,7 @@ def ask(req: AskRequest, request: Request):
             }
             for c in result["claims"]
         ]
+        response["claims_truncated"] = result.get("claims_truncated", False)
     return response
 
 

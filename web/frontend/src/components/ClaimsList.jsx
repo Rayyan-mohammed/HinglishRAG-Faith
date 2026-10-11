@@ -78,7 +78,7 @@ function ConfidenceBar({ value, className }) {
   );
 }
 
-export default function ClaimsList({ claims }) {
+export default function ClaimsList({ claims, truncated }) {
   return (
     <section aria-label="Claim verification" className="card mt-4 overflow-hidden">
       <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3 dark:border-slate-800">
@@ -100,6 +100,12 @@ export default function ClaimsList({ claims }) {
       ) : (
         <>
           <Summary claims={claims} />
+          {truncated && (
+            <p className="border-b border-slate-100 bg-slate-50/70 px-5 py-2.5 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-800/30 dark:text-slate-400">
+              This answer had more claims than shown — only the first {claims.length} were verified, to keep
+              response time reasonable.
+            </p>
+          )}
           <ul className="divide-y divide-slate-100 dark:divide-slate-800">
             {claims.map((c, i) => {
               const style = styleFor(c.verdict);

@@ -168,7 +168,9 @@ export default function App() {
                       className="mt-8 text-left"
                     >
                       <AnswerCard answer={result.answer} />
-                      {lastVerify && result.claims && <ClaimsList claims={result.claims} />}
+                      {lastVerify && result.claims && (
+                        <ClaimsList claims={result.claims} truncated={result.claims_truncated} />
+                      )}
                       <SourcesPanel sources={result.context_passages} />
                     </motion.div>
                   )}
