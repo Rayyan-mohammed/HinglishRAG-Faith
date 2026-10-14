@@ -1,6 +1,6 @@
 <div align="center">
 
-# CodeSwitch-Verify
+
 
 **Faithfulness-checked RAG for Hinglish government-scheme Q&A**
 
